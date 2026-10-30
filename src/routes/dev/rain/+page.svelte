@@ -1,11 +1,8 @@
 <script lang="ts">
-	import RainCanvas from '#lib/components/RainCanvas.svelte';
-	import {
-		defaultConfig,
-		type RainConfig,
-		type RainStats,
-		type SceneName
-	} from '#lib/rain/index.js';
+	import { defaultConfig, type RainConfig, type SceneName } from '#lib/rain/index.js';
+	import { useRain } from '#lib/rain-handle.svelte.js';
+
+	const rain = useRain();
 
 	let rainAmount = $state(defaultConfig.rainAmount);
 	let dropSize = $state(defaultConfig.dropSize);
@@ -17,7 +14,7 @@
 	let scene = $state<SceneName | 'image'>('dusk-forest');
 	let imageUrl = $state('');
 	let reducedMotion = $state<'auto' | 'on' | 'off'>('auto');
-	let stats = $state<RainStats | null>(null);
+	const stats = $derived(rain.stats);
 	let open = $state(true);
 
 	const config = $derived<Partial<RainConfig>>({
@@ -33,6 +30,16 @@
 				? { kind: 'image', src: imageUrl }
 				: { kind: 'scene', scene: scene === 'image' ? 'dusk-forest' : scene },
 		reducedMotion: reducedMotion === 'auto' ? 'auto' : reducedMotion === 'on'
+	});
+
+	$effect(() => {
+		rain.controller?.setConfig(config);
+	});
+
+	// Leave the glass as we found it when navigating away.
+	$effect(() => {
+		const controller = rain.controller;
+		return () => controller?.setConfig(defaultConfig);
 	});
 
 	const sliders = [
@@ -92,8 +99,6 @@
 	<title>Rain lab</title>
 	<meta name="robots" content="noindex" />
 </svelte:head>
-
-<RainCanvas {config} onstats={(s) => (stats = s)} />
 
 <aside class="panel" class:closed={!open}>
 	<header>

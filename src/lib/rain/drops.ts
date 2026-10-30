@@ -30,6 +30,11 @@ export type DropSettings = {
 
 /** Floats per instance: x, y, radius, vertical stretch. */
 export const INSTANCE_STRIDE = 4;
+/** Instance slots kept free after the rain for drops placed by pages. */
+export const RESERVED_INSTANCES = 16;
+
+/** A circle on the glass that rain avoids, such as a homepage drop. */
+export type Obstacle = { x: number; y: number; r: number };
 
 const MAX_DROPS = 5000;
 const CELL = 32;
@@ -48,7 +53,8 @@ export class DropSim {
 	private height = 1;
 	private grid = new Map<number, Drop[]>();
 	private rand: () => number;
-	readonly instances = new Float32Array(MAX_DROPS * INSTANCE_STRIDE);
+	private obstacles: readonly Obstacle[] = [];
+	readonly instances = new Float32Array((MAX_DROPS + RESERVED_INSTANCES) * INSTANCE_STRIDE);
 
 	constructor(rand: () => number = Math.random) {
 		this.rand = rand;
@@ -62,6 +68,12 @@ export class DropSim {
 		this.width = width;
 		this.height = height;
 		this.drops = this.drops.filter((d) => d.x < width + 20 && d.y < height + 20);
+	}
+
+	/** Rain does not land on obstacles, and sliding drops that reach one are absorbed by it. */
+	setObstacles(obstacles: readonly Obstacle[]) {
+		this.obstacles = obstacles;
+		this.drops = this.drops.filter((d) => !this.onObstacle(d.x, d.y, d.r));
 	}
 
 	step(dt: number, s: DropSettings) {
@@ -112,6 +124,7 @@ export class DropSim {
 			if (this.drops.length >= MAX_DROPS) return;
 			const r = (Math.pow(this.rand(), 2.5) * 10 + 2.6) * s.dropSize;
 			const d = this.makeDrop(this.rand() * this.width, this.rand() * this.height * 0.95, r, false);
+			if (this.onObstacle(d.x, d.y, d.r)) continue;
 			// Landing on an existing drop grows it instead of overlapping it.
 			const hit = this.firstOverlap(d);
 			if (hit && !hit.mist) {
@@ -130,7 +143,9 @@ export class DropSim {
 		const missing = Math.min(30, target - mistCount);
 		for (let i = 0; i < missing; i++) {
 			const r = Math.pow(this.rand(), 2) * 1.8 + 0.8;
-			this.drops.push(this.makeDrop(this.rand() * this.width, this.rand() * this.height, r, true));
+			const x = this.rand() * this.width;
+			const y = this.rand() * this.height;
+			if (!this.onObstacle(x, y, r)) this.drops.push(this.makeDrop(x, y, r, true));
 		}
 	}
 
@@ -166,6 +181,11 @@ export class DropSim {
 			);
 		}
 
+		if (this.onObstacle(d.x, d.y, d.r)) {
+			d.dead = true;
+			return;
+		}
+
 		for (const other of this.neighbours(d)) {
 			if (other === d || other.dead) continue;
 			if (other.y > d.y + d.r && other.r > d.r * 0.5) continue;
@@ -178,6 +198,14 @@ export class DropSim {
 				d.r = Math.min(MAX_RADIUS, Math.hypot(d.r, other.r * (other.mist ? 0.5 : 0.85)));
 			}
 		}
+	}
+
+	private onObstacle(x: number, y: number, r: number): boolean {
+		for (const o of this.obstacles) {
+			const reach = o.r + r * 0.5;
+			if ((o.x - x) ** 2 + (o.y - y) ** 2 < reach * reach) return true;
+		}
+		return false;
 	}
 
 	private makeDrop(x: number, y: number, r: number, mist: boolean): Drop {

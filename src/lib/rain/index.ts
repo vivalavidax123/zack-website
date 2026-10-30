@@ -1,9 +1,11 @@
 import { paintBackground, type PaintedBackground } from './background';
 import { defaultConfig, mergeConfig, type BackgroundSource, type RainConfig } from './config';
 import { DropSim } from './drops';
+import { FeatureDrops, type FeatureDrop } from './features';
 import { GlassRenderer } from './renderer';
 
 export type { BackgroundSource, RainConfig, SceneName } from './config';
+export type { FeatureDrop } from './features';
 export { defaultConfig } from './config';
 
 export type RainStats = {
@@ -17,6 +19,10 @@ export type RainStats = {
 
 export type RainController = {
 	setConfig(patch: Partial<RainConfig>): void;
+	/** Place large drops on the glass (homepage tabs). Ids keep their animation across calls. */
+	setFeatureDrops(drops: FeatureDrop[]): void;
+	/** Swell one feature drop, or none. */
+	setHovered(id: string | null): void;
 	onStats(listener: (stats: RainStats) => void): () => void;
 	destroy(): void;
 };
@@ -37,6 +43,7 @@ export function createRain(
 	let config = mergeConfig(defaultConfig, patch);
 	const renderer = safeCreate(canvas);
 	const sim = new DropSim();
+	const features = new FeatureDrops();
 	const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
 	const listeners = new Set<(stats: RainStats) => void>();
 
@@ -96,11 +103,14 @@ export function createRain(
 
 	function stepSim(dt: number) {
 		sim.step(dt, config);
+		features.step(dt);
 	}
 
 	function draw() {
 		if (renderer) {
-			const count = sim.writeInstances();
+			const still = reducedMotion();
+			if (still) features.settle();
+			const count = features.write(sim.instances, sim.writeInstances(), elapsed, still);
 			renderer.render(sim.instances, count, {
 				time: elapsed,
 				refraction: config.refraction,
@@ -214,6 +224,15 @@ export function createRain(
 				measure();
 			}
 			if (config.reducedMotion !== before.reducedMotion) sync();
+			if (!running) drawOnce();
+		},
+		setFeatureDrops(drops) {
+			features.set(drops, reducedMotion());
+			sim.setObstacles(drops);
+			if (!running) drawOnce();
+		},
+		setHovered(id) {
+			features.setHovered(id);
 			if (!running) drawOnce();
 		},
 		onStats(listener) {
