@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { cubicOut } from 'svelte/easing';
+	import { fade } from 'svelte/transition';
 	import { PreviewPlayer, type PreviewState } from '#lib/audio/preview.js';
 	import type { FeatureBox } from '#lib/rain/index.js';
 	import { useRain } from '#lib/rain-handle.svelte.js';
@@ -19,6 +21,9 @@
 	let view = $state<'glass' | 'list' | null>(null);
 	let hovered = $state<string | null>(null);
 	let selected = $state<string | null>(null);
+	/** Where the clicked drop was: the panel opens out of it like a splash. */
+	let origin = $state({ x: 0, y: 0, r: 0 });
+	let splashes = $state(0);
 	let box = $state<FeatureBox | null>(null);
 	let preview = $state<PreviewState>({ id: null, status: 'idle' });
 
@@ -85,10 +90,17 @@
 		play(id ? byId.get(id) : undefined);
 	}
 
-	/** Load the previews of the drops around the pointer before they're needed. */
+	const covers = new Set<string>();
+
+	/** Load the previews and covers of the drops around the pointer before they're needed. */
 	function warmAround(x: number, y: number) {
 		for (const id of rain.controller?.featuresNear(x, y, 160).slice(0, 3) ?? []) {
-			void player?.warm(id, byId.get(id)?.deezerId ?? null);
+			const song = byId.get(id);
+			void player?.warm(id, song?.deezerId ?? null);
+			if (song?.imageUrl && !covers.has(song.imageUrl)) {
+				covers.add(song.imageUrl);
+				new Image().src = song.imageUrl;
+			}
 		}
 	}
 
@@ -110,8 +122,12 @@
 		if (!controller) return;
 		const id = controller.featureAt(e.clientX, e.clientY);
 		if (e.pointerType !== 'touch') {
-			if (id) selected = id;
-			else if (preview.status === 'blocked') play(hovered ? byId.get(hovered) : undefined);
+			if (id) {
+				const b = rain.controller?.featureBox(id);
+				origin = b ? { x: b.x, y: b.y, r: b.r } : { x: e.clientX, y: e.clientY, r: 0 };
+				splashes++;
+				selected = id;
+			} else if (preview.status === 'blocked') play(hovered ? byId.get(hovered) : undefined);
 			return;
 		}
 		// Phones have no hover: the first tap plays and shows the card, a second opens Spotify.
@@ -136,6 +152,28 @@
 
 	const hoveredSong = $derived(hovered ? byId.get(hovered) : undefined);
 	const selectedSong = $derived(selected ? byId.get(selected) : undefined);
+
+	const stillQuery = '(prefers-reduced-motion: reduce)';
+
+	/** Svelte transition: reveal the panel as a circle growing from the drop. */
+	function splash(node: HTMLElement, from: { x: number; y: number; r: number }) {
+		const rect = node.getBoundingClientRect();
+		const cx = from.x - rect.left;
+		const cy = from.y - rect.top;
+		const reach = Math.max(
+			...[
+				[0, 0],
+				[rect.width, 0],
+				[0, rect.height],
+				[rect.width, rect.height]
+			].map(([x, y]) => Math.hypot(x - cx, y - cy))
+		);
+		return {
+			duration: matchMedia(stillQuery).matches ? 0 : 520,
+			easing: cubicOut,
+			css: (t: number) => `clip-path: circle(${from.r + (reach - from.r) * t}px at ${cx}px ${cy}px)`
+		};
+	}
 
 	/** Put the card beside the drop, on whichever side has room. */
 	const cardStyle = $derived.by(() => {
@@ -204,21 +242,23 @@
 	</button>
 {/if}
 
+{#if view === 'glass' && hoveredSong?.imageUrl && box}
+	<!-- The cover sits inside the drop, as if seen through the water. -->
+	{#key hoveredSong.id}
+		<span
+			class="cover"
+			out:fade|global={{ duration: 300 }}
+			style:left="{box.x}px"
+			style:top="{box.y}px"
+			style:width="{box.r * 1.7}px"
+			style:height="{box.r * 1.7}px"
+		>
+			<img src={hoveredSong.imageUrl} alt="" />
+		</span>
+	{/key}
+{/if}
+
 {#if view === 'glass' && hoveredSong && box}
-	{#if hoveredSong.imageUrl}
-		<!-- The cover sits inside the drop, as if seen through the water. -->
-		{#key hoveredSong.id}
-			<img
-				class="cover"
-				src={hoveredSong.imageUrl}
-				alt=""
-				style:left="{box.x}px"
-				style:top="{box.y}px"
-				style:width="{box.r * 1.7}px"
-				style:height="{box.r * 1.7}px"
-			/>
-		{/key}
-	{/if}
 	<div class="card" style={cardStyle} aria-live="polite">
 		<span class="title">{hoveredSong.title}</span>
 		<span class="artist">{hoveredSong.artist}</span>
@@ -260,8 +300,20 @@
 	</main>
 {/if}
 
+{#if selectedSong && splashes}
+	{#key splashes}
+		<span
+			class="ripple"
+			style:left="{origin.x}px"
+			style:top="{origin.y}px"
+			style:width="{origin.r * 2}px"
+			style:height="{origin.r * 2}px"
+		></span>
+	{/key}
+{/if}
+
 {#if selectedSong}
-	<aside class="panel" aria-label={selectedSong.title}>
+	<aside class="panel" aria-label={selectedSong.title} transition:splash={origin}>
 		<button class="close" type="button" aria-label="Close" onclick={() => (selected = null)}>
 			×
 		</button>
@@ -374,15 +426,37 @@
 
 	.cover {
 		position: fixed;
-		transform: translate(-50%, -50%);
+		translate: -50% -50%;
 		border-radius: 50%;
-		object-fit: cover;
+		overflow: hidden;
 		pointer-events: none;
-		/* Soft edge, so the drop's own rim and shine still frame it. */
+		/* Soft edge, so the drop's own dark rim still frames it. */
 		mask-image: radial-gradient(circle, #000 52%, transparent 71%);
-		opacity: 0.88;
-		filter: saturate(0.85) contrast(1.05);
+		opacity: 0.9;
 		animation: surface 0.35s ease-out;
+	}
+	.cover img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		/* Water bulges the middle and softens hard edges a little. */
+		scale: 1.12;
+		filter: saturate(0.85) contrast(1.05) blur(0.4px);
+	}
+	/* The drop's shine and shading, redrawn on top so it reads as water, not a sticker. */
+	.cover::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		border-radius: 50%;
+		background:
+			radial-gradient(
+				circle at 34% 26%,
+				rgba(255, 255, 255, 0.5) 0,
+				rgba(255, 255, 255, 0.12) 9%,
+				transparent 22%
+			),
+			radial-gradient(circle at 50% 45%, transparent 38%, rgba(5, 12, 12, 0.55) 70%);
 	}
 	@keyframes surface {
 		from {
@@ -484,6 +558,32 @@
 			height: 40px;
 		}
 		li a {
+			display: none;
+		}
+	}
+
+	/* A ring of water spreading from the clicked drop. */
+	.ripple {
+		position: fixed;
+		translate: -50% -50%;
+		border-radius: 50%;
+		border: 1.5px solid rgba(232, 239, 238, 0.55);
+		pointer-events: none;
+		opacity: 0;
+		animation: ripple 0.7s ease-out;
+	}
+	@keyframes ripple {
+		from {
+			opacity: 1;
+			scale: 1;
+		}
+		to {
+			opacity: 0;
+			scale: 2.6;
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.ripple {
 			display: none;
 		}
 	}

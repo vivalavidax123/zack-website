@@ -27,11 +27,14 @@ type LiveFeature = FeatureDrop & {
 	scale: number;
 	phase: number;
 	speed: number;
+	/** Removed by the page: shrinking away, no longer hoverable. */
+	leaving?: boolean;
 };
 
 export const MAX_FEATURES = RESERVED_INSTANCES;
 
 const APPEAR_SECONDS = 1.4;
+const LEAVE_SECONDS = 0.45;
 const STAGGER_SECONDS = 0.18;
 const MAX_STAGGER_SECONDS = 1.2;
 const HOVER_SCALE = 1.08;
@@ -62,9 +65,17 @@ export class FeatureDrops {
 	 */
 	set(next: FeatureDrop[], instant: boolean) {
 		const previous = new Map(this.items.map((f) => [f.id, f]));
-		this.items = next.slice(0, MAX_FEATURES).map((f, i) => {
+		const ids = new Set(next.map((f) => f.id));
+		// Drops the page took away shrink off the glass instead of vanishing.
+		const leaving = instant
+			? []
+			: this.items.filter((f) => !ids.has(f.id)).map((f) => ({ ...f, leaving: true }));
+		const staying = next.slice(0, MAX_FEATURES - Math.min(leaving.length, MAX_FEATURES / 2));
+		this.items = staying.map((f, i): LiveFeature => {
 			const old = previous.get(f.id);
-			if (old) return { ...old, x: f.x, y: f.drift ? old.y : f.y, r: f.r, drift: f.drift };
+			if (old && !old.leaving) {
+				return { ...old, x: f.x, y: f.drift ? old.y : f.y, r: f.r, drift: f.drift };
+			}
 			return {
 				...f,
 				appear: instant ? 1 : 0,
@@ -74,6 +85,7 @@ export class FeatureDrops {
 				speed: f.drift ?? 0
 			};
 		});
+		this.items.push(...leaving.slice(0, MAX_FEATURES - this.items.length));
 	}
 
 	setHovered(id: string | null) {
@@ -87,7 +99,12 @@ export class FeatureDrops {
 	}
 
 	step(dt: number) {
+		this.items = this.items.filter((f) => !f.leaving || f.appear > 0);
 		for (const f of this.items) {
+			if (f.leaving) {
+				f.appear = Math.max(0, f.appear - dt / LEAVE_SECONDS);
+				continue;
+			}
 			if (f.delay > 0) f.delay -= dt;
 			else f.appear = Math.min(1, f.appear + dt / APPEAR_SECONDS);
 			const target = f.id === this.hovered ? HOVER_SCALE : 1;
@@ -107,6 +124,7 @@ export class FeatureDrops {
 
 	/** Jump straight to the resting state, for reduced motion. */
 	settle() {
+		this.items = this.items.filter((f) => !f.leaving);
 		for (const f of this.items) {
 			f.delay = 0;
 			f.appear = 1;
@@ -118,24 +136,25 @@ export class FeatureDrops {
 	at(x: number, y: number): string | null {
 		// Keep the hovered drop while the pointer is still on it, even if a
 		// drifting neighbour slides over it.
-		const hovered = this.items.find((f) => f.id === this.hovered);
+		const hovered = this.items.find((f) => f.id === this.hovered && !f.leaving);
 		if (hovered && this.contains(hovered, x, y)) return hovered.id;
 		for (let i = this.items.length - 1; i >= 0; i--) {
 			const f = this.items[i];
-			if (f.appear < 0.5) continue;
+			if (f.appear < 0.5 || f.leaving) continue;
 			if (this.contains(f, x, y)) return f.id;
 		}
 		return null;
 	}
 
 	box(id: string): FeatureBox | null {
-		const f = this.items.find((item) => item.id === id);
+		const f = this.items.find((item) => item.id === id && !item.leaving);
 		return f ? { id: f.id, x: f.x, y: f.y, r: f.r * f.scale } : null;
 	}
 
 	/** Ids of drops whose edge is within `distance` of a point, nearest first. */
 	nearby(x: number, y: number, distance: number): string[] {
 		return this.items
+			.filter((f) => !f.leaving)
 			.map((f) => ({ id: f.id, gap: Math.hypot(f.x - x, f.y - y) - f.r }))
 			.filter((d) => d.gap <= distance)
 			.sort((a, b) => a.gap - b.gap)

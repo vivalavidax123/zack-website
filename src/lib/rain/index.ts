@@ -31,6 +31,13 @@ export type RainController = {
 	featureBox(id: string): FeatureBox | null;
 	/** Feature drops within `distance` of a point, nearest first. */
 	featuresNear(x: number, y: number, distance: number): string[];
+	/**
+	 * Before a page changes: move toward the glass (1) or step back from it (-1),
+	 * toward a point in CSS pixels. Resolves when the view is at its deepest.
+	 */
+	leave(direction: 1 | -1, toward?: { x: number; y: number }): Promise<void>;
+	/** After the new page is in place: settle back to rest. */
+	arrive(): Promise<void>;
 	onStats(listener: (stats: RainStats) => void): () => void;
 	destroy(): void;
 };
@@ -38,6 +45,22 @@ export type RainController = {
 /** Seconds of simulated rain before the first frame, so the glass is never empty. */
 const PREWARM_SECONDS = 8;
 const MAX_STEP = 1 / 30;
+const LEAVE_MS = 380;
+const ARRIVE_MS = 700;
+/** Stepping back is the gentler move. */
+const BACK_DEPTH = 0.33;
+
+type Tween = {
+	from: number;
+	to: number;
+	start: number;
+	ms: number;
+	ease: (t: number) => number;
+	done: () => void;
+};
+
+const easeIn = (t: number) => t * t * t;
+const easeOut = (t: number) => 1 - (1 - t) ** 3;
 
 /**
  * Mount rain-on-glass onto a canvas. The canvas is sized from its CSS box, so
@@ -65,6 +88,10 @@ export function createRain(
 	let background: PaintedBackground | null = null;
 	let backgroundKey = '';
 	let paintToken = 0;
+
+	let zoom = 0;
+	let focus: [number, number] = [0.5, 0.5];
+	let tween: Tween | null = null;
 
 	let frames = 0;
 	let workMs = 0;
@@ -127,13 +154,38 @@ export function createRain(
 				refraction: config.refraction,
 				streaks: reducedMotion() ? 0 : config.streaks,
 				brightness: config.brightness,
-				tint: config.tint
+				tint: config.tint,
+				zoom,
+				focus
 			});
 		} else if (background) {
 			// No WebGL: a still, blurred scene is still a calm background.
 			const ctx = canvas.getContext('2d');
 			ctx?.drawImage(background.fog, 0, 0, canvas.width, canvas.height);
 		}
+	}
+
+	/** Animate the zoom on the frame clock. Without animation there's nothing to wait for. */
+	function zoomTo(to: number, ms: number, ease: (t: number) => number): Promise<void> {
+		tween?.done();
+		tween = null;
+		if (!running) {
+			zoom = 0;
+			return Promise.resolve();
+		}
+		return new Promise((done) => {
+			tween = { from: zoom, to, start: performance.now(), ms, ease, done };
+		});
+	}
+
+	function stepZoom(now: number) {
+		if (!tween) return;
+		const t = Math.min(1, (now - tween.start) / tween.ms);
+		zoom = tween.from + (tween.to - tween.from) * tween.ease(t);
+		if (t < 1) return;
+		const { done } = tween;
+		tween = null;
+		done();
 	}
 
 	function drawOnce() {
@@ -149,6 +201,7 @@ export function createRain(
 		elapsed += dt;
 
 		const start = performance.now();
+		stepZoom(now);
 		stepSim(dt);
 		draw();
 		workMs += performance.now() - start;
@@ -185,6 +238,9 @@ export function createRain(
 	function stop() {
 		running = false;
 		cancelAnimationFrame(raf);
+		tween?.done();
+		tween = null;
+		zoom = 0;
 	}
 
 	function prewarm() {
@@ -236,6 +292,13 @@ export function createRain(
 			}
 			if (config.reducedMotion !== before.reducedMotion) sync();
 			if (!running) drawOnce();
+		},
+		leave(direction, toward) {
+			focus = toward ? [toward.x / width, 1 - toward.y / height] : [0.5, 0.5];
+			return zoomTo(direction > 0 ? 1 : -BACK_DEPTH, LEAVE_MS, easeIn);
+		},
+		arrive() {
+			return zoomTo(0, ARRIVE_MS, easeOut);
 		},
 		setFeatureDrops(drops) {
 			features.set(drops, reducedMotion());
