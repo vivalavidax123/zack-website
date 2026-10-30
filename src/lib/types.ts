@@ -17,3 +17,21 @@ export type NowPlaying =
 	| { state: 'playing'; track: Track }
 	| { state: 'recent'; track: Track; playedAt: string }
 	| { state: 'unavailable' };
+
+/** One song on the songs page, in the site's own shape. */
+export type Song = {
+	/** Spotify track id. */
+	id: string;
+	title: string;
+	artist: string;
+	album: string;
+	imageUrl: string | null;
+	spotifyUrl: string;
+	/** Favourites are hand-kept; recent ones come live from Spotify. */
+	source: 'favourite' | 'recent';
+	/** Deezer track id for the preview, or null when Deezer has no playable copy. */
+	deezerId: number | null;
+	/** Seconds into the 30-second Deezer preview where the best part starts. */
+	climaxStart: number;
+	note?: string;
+};

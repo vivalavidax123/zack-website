@@ -1,11 +1,11 @@
 import { paintBackground, type PaintedBackground } from './background';
 import { defaultConfig, mergeConfig, type BackgroundSource, type RainConfig } from './config';
 import { DropSim } from './drops';
-import { FeatureDrops, type FeatureDrop } from './features';
+import { FeatureDrops, type FeatureBox, type FeatureDrop } from './features';
 import { GlassRenderer } from './renderer';
 
 export type { BackgroundSource, RainConfig, SceneName } from './config';
-export type { FeatureDrop } from './features';
+export type { FeatureBox, FeatureDrop } from './features';
 export { defaultConfig } from './config';
 
 export type RainStats = {
@@ -23,6 +23,14 @@ export type RainController = {
 	setFeatureDrops(drops: FeatureDrop[]): void;
 	/** Swell one feature drop, or none. */
 	setHovered(id: string | null): void;
+	/** Where the pointer is, in CSS pixels, so drifting drops can stop for it. */
+	setPointer(point: { x: number; y: number } | null): void;
+	/** The feature drop under a point, if any. */
+	featureAt(x: number, y: number): string | null;
+	/** Where a feature drop is right now. */
+	featureBox(id: string): FeatureBox | null;
+	/** Feature drops within `distance` of a point, nearest first. */
+	featuresNear(x: number, y: number, distance: number): string[];
 	onStats(listener: (stats: RainStats) => void): () => void;
 	destroy(): void;
 };
@@ -79,6 +87,7 @@ export function createRain(
 			canvas.height = Math.round(height * ratio);
 		}
 		sim.resize(width, height);
+		features.setBounds(height);
 		return true;
 	}
 
@@ -102,8 +111,10 @@ export function createRain(
 	}
 
 	function stepSim(dt: number) {
-		sim.step(dt, config);
 		features.step(dt);
+		// Moving drops carry their clear patch of glass with them.
+		if (features.moving) sim.setObstacles(features.list, false);
+		sim.step(dt, config);
 	}
 
 	function draw() {
@@ -235,6 +246,13 @@ export function createRain(
 			features.setHovered(id);
 			if (!running) drawOnce();
 		},
+		setPointer(point) {
+			if (point) features.setPointer(point.x, point.y);
+			else features.setPointer(null);
+		},
+		featureAt: (x, y) => features.at(x, y),
+		featureBox: (id) => features.box(id),
+		featuresNear: (x, y, distance) => features.nearby(x, y, distance),
 		onStats(listener) {
 			listeners.add(listener);
 			if (!running) listener(idleStats());
