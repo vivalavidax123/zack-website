@@ -16,8 +16,8 @@ export type PreviewState = {
 const FADE_MS = 400;
 /** Deezer links last about 15 minutes; refetch after 10 to be safe. */
 const URL_FRESH_MS = 10 * 60 * 1000;
-/** Keep a few elements around so returning to a song is instant. */
-const MAX_ELEMENTS = 6;
+/** Keep a few elements around: the warmed neighbours and recent songs. */
+const MAX_ELEMENTS = 10;
 
 type Entry = { audio: HTMLAudioElement; fade: number; at: number };
 
@@ -33,9 +33,15 @@ export class PreviewPlayer {
 
 	constructor(private onchange: (state: PreviewState) => void = () => {}) {}
 
-	/** Fetch the link ahead of time, so hovering starts sound faster. */
-	warm(deezerId: number | null) {
-		if (deezerId) void this.url(deezerId);
+	/**
+	 * Fetch the link and start loading the audio ahead of time. Deezer's audio
+	 * server can take a second or two to send a file it hasn't served lately,
+	 * so this is what makes a hover sound instant.
+	 */
+	async warm(id: string, deezerId: number | null) {
+		if (!deezerId) return;
+		const url = await this.url(deezerId);
+		if (url) this.element(id, url);
 	}
 
 	async play(id: string, deezerId: number | null, startAt: number) {

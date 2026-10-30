@@ -69,6 +69,8 @@
 
 	onMount(() => {
 		player = new PreviewPlayer((s) => (preview = s));
+		// The first few favourites are the likeliest first hovers.
+		for (const song of songs.slice(0, 3)) void player.warm(song.id, song.deezerId);
 		return () => player?.destroy();
 	});
 
@@ -83,10 +85,10 @@
 		play(id ? byId.get(id) : undefined);
 	}
 
-	/** Fetch preview links for the drops around the pointer before they're needed. */
+	/** Load the previews of the drops around the pointer before they're needed. */
 	function warmAround(x: number, y: number) {
 		for (const id of rain.controller?.featuresNear(x, y, 160).slice(0, 3) ?? []) {
-			player?.warm(byId.get(id)?.deezerId ?? null);
+			void player?.warm(id, byId.get(id)?.deezerId ?? null);
 		}
 	}
 
