@@ -17,7 +17,7 @@ const FADE_MS = 400;
 /** Deezer links last about 15 minutes; refetch after 10 to be safe. */
 const URL_FRESH_MS = 10 * 60 * 1000;
 /** Keep a few elements around: the warmed neighbours and recent songs. */
-const MAX_ELEMENTS = 10;
+const MAX_ELEMENTS = 16;
 
 type Entry = { audio: HTMLAudioElement; fade: number; at: number };
 
@@ -128,18 +128,19 @@ export class PreviewPlayer {
 					this.set(null, 'idle');
 				}
 			});
-			entry = { audio, fade: 0, at: 0 };
+			entry = { audio, fade: 0, at: performance.now() };
 			this.elements.set(id, entry);
-			this.trim();
+			this.trim(id);
 		}
 		entry.at = performance.now();
 		return entry;
 	}
 
-	/** Forget the least recently used, silent elements. */
-	private trim() {
+	/** Forget the least recently used, silent elements, never the one just made or wanted. */
+	private trim(keep: string) {
+		const spared = new Set([keep, this.current, this.wanted]);
 		const quiet = [...this.elements.entries()]
-			.filter(([id, e]) => id !== this.current && e.audio.paused)
+			.filter(([id, e]) => !spared.has(id) && e.audio.paused)
 			.sort((a, b) => a[1].at - b[1].at);
 		while (this.elements.size > MAX_ELEMENTS && quiet.length) {
 			const [id, e] = quiet.shift()!;

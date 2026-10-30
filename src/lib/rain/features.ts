@@ -116,11 +116,14 @@ export class FeatureDrops {
 
 	/** The drop under a point, if any. Uses the drawn size, so a swollen drop is easier to hit. */
 	at(x: number, y: number): string | null {
+		// Keep the hovered drop while the pointer is still on it, even if a
+		// drifting neighbour slides over it.
+		const hovered = this.items.find((f) => f.id === this.hovered);
+		if (hovered && this.contains(hovered, x, y)) return hovered.id;
 		for (let i = this.items.length - 1; i >= 0; i--) {
 			const f = this.items[i];
 			if (f.appear < 0.5) continue;
-			const r = f.r * f.scale;
-			if ((f.x - x) ** 2 + (f.y - y) ** 2 <= r * r) return f.id;
+			if (this.contains(f, x, y)) return f.id;
 		}
 		return null;
 	}
@@ -156,6 +159,11 @@ export class FeatureDrops {
 			n++;
 		}
 		return n;
+	}
+
+	private contains(f: LiveFeature, x: number, y: number): boolean {
+		const r = f.r * f.scale;
+		return (f.x - x) ** 2 + (f.y - y) ** 2 <= r * r;
 	}
 
 	private near(f: LiveFeature): boolean {
