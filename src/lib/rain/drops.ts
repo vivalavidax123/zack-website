@@ -37,6 +37,10 @@ const REFERENCE_AREA = 1280 * 800;
 const GRAVITY = 900;
 const MAX_SPEED = 520;
 const MAX_RADIUS = 18;
+/** Radius lost per second by a drop sitting still, in CSS pixels. */
+const EVAPORATION = 0.06;
+/** Drops (not counting mist) per reference screen at full rain. */
+const MAX_BEADS = 900;
 
 export class DropSim {
 	private drops: Drop[] = [];
@@ -68,8 +72,12 @@ export class DropSim {
 
 		for (const d of this.drops) {
 			if (d.dead || d.mist) continue;
-			if (d.vy === 0) this.maybeStartSliding(d, dt, s);
-			else this.slide(d, dt);
+			if (d.vy === 0) {
+				// Small beads slowly evaporate, so the glass never fills up.
+				d.r -= dt * EVAPORATION * (3 / Math.max(d.r, 1));
+				if (d.r < 0.7) d.dead = true;
+				else this.maybeStartSliding(d, dt, s);
+			} else this.slide(d, dt);
 		}
 
 		this.drops = this.drops.filter((d) => !d.dead && d.y - d.r < this.height);
@@ -93,6 +101,10 @@ export class DropSim {
 	}
 
 	private spawnRain(dt: number, s: DropSettings, area: number) {
+		let beads = 0;
+		for (const d of this.drops) if (!d.mist) beads++;
+		// Keep a believable amount of water: when the glass is full, new rain only merges.
+		const full = beads >= MAX_BEADS * area * Math.max(0.3, s.rainAmount);
 		let expected = s.rainAmount * 70 * area * dt;
 		while (expected > 0) {
 			if (expected < 1 && this.rand() > expected) break;
@@ -104,7 +116,7 @@ export class DropSim {
 			const hit = this.firstOverlap(d);
 			if (hit && !hit.mist) {
 				hit.r = Math.min(MAX_RADIUS, Math.hypot(hit.r, d.r * 0.7));
-			} else {
+			} else if (!full) {
 				if (hit) hit.dead = true;
 				this.drops.push(d);
 			}
@@ -123,10 +135,10 @@ export class DropSim {
 	}
 
 	private maybeStartSliding(d: Drop, dt: number, s: DropSettings) {
-		const threshold = 5.2 * s.dropSize;
+		const threshold = 8.5 * s.dropSize;
 		if (d.r < threshold) return;
 		// Heavier drops break free sooner.
-		if (this.rand() < dt * (d.r - threshold) * 0.6) {
+		if (this.rand() < dt * (d.r - threshold) * 0.35) {
 			d.vy = between(this.rand, 20, 60);
 			d.lastTrailY = d.y;
 		}
