@@ -60,6 +60,8 @@ uniform float uRefraction;
 uniform float uStreaks;
 uniform float uBrightness;
 uniform vec3 uTint;
+uniform float uZoom;
+uniform vec2 uFocus;
 out vec4 outColor;
 
 float hash(float n) { return fract(sin(n * 127.1) * 43758.5453); }
@@ -85,18 +87,26 @@ float rain(vec2 uv) {
 }
 
 void main() {
-	vec4 water = texture(uWater, vUv);
-	float cover = water.a;
+	// Page transitions move the viewer: toward the window (zoom > 0) or back (< 0).
+	// The glass is nearer than the scene, so it grows faster: that is the depth.
+	// The scene is always framed a little wide, so stepping back has room.
+	vec2 glassUv = uFocus + (vUv - uFocus) / (1.0 + max(uZoom, 0.0) * 0.3);
+	vec2 sceneUv = uFocus + (vUv - uFocus) / (1.04 + uZoom * 0.12);
+	// Halfway through, the view passes through mist.
+	float mist = smoothstep(0.0, 1.0, abs(uZoom));
+
+	vec4 water = texture(uWater, glassUv);
+	float cover = water.a * (1.0 - mist * 0.5);
 	// Water map is in screen space with y down; flip the normal into uv space.
 	vec2 n = (water.rg * 2.0 - 1.0) * vec2(1.0, -1.0);
 	float h = water.b;
 
-	vec3 fog = texture(uFog, vUv).rgb;
-	fog += vec3(0.75, 0.82, 0.82) * rain(vUv) * uStreaks * 0.16;
+	vec3 fog = texture(uFog, sceneUv).rgb;
+	fog += vec3(0.75, 0.82, 0.82) * rain(sceneUv) * uStreaks * 0.16;
 
 	// A drop is a tiny fisheye lens: it shows a flipped, wider view of the scene.
 	vec2 aspect = vec2(uSize.y / uSize.x, 1.0);
-	vec2 refracted = vUv - n * uRefraction * aspect * (0.35 + h);
+	vec2 refracted = sceneUv - n * uRefraction * aspect * (0.35 + h);
 	vec3 inside = texture(uSharp, refracted).rgb;
 	inside += vec3(0.8, 0.86, 0.86) * rain(refracted) * uStreaks * 0.1;
 	inside *= 1.08;
@@ -109,7 +119,7 @@ void main() {
 	inside += spec * 0.28;
 
 	vec3 color = mix(fog, inside, cover);
-	color *= uBrightness * uTint;
+	color *= uBrightness * uTint * (1.0 + mist * 0.08);
 
 	// Gentle vignette and a whisper of grain so gradients do not band.
 	vec2 c = vUv - 0.5;
@@ -125,6 +135,10 @@ export type FrameParams = {
 	streaks: number;
 	brightness: number;
 	tint: [number, number, number];
+	/** -1 (stepped back) … 0 (at rest) … 1 (pressed up to the glass). */
+	zoom: number;
+	/** The point the view moves toward, in uv (0..1, y up). */
+	focus: [number, number];
 };
 
 export class GlassRenderer {
@@ -190,7 +204,9 @@ export class GlassRenderer {
 			'uRefraction',
 			'uStreaks',
 			'uBrightness',
-			'uTint'
+			'uTint',
+			'uZoom',
+			'uFocus'
 		]) {
 			this.uniforms[name] = gl.getUniformLocation(this.compositeProgram, name);
 		}
@@ -281,6 +297,8 @@ export class GlassRenderer {
 		gl.uniform1f(this.uniforms.uStreaks, p.streaks);
 		gl.uniform1f(this.uniforms.uBrightness, p.brightness);
 		gl.uniform3f(this.uniforms.uTint, p.tint[0], p.tint[1], p.tint[2]);
+		gl.uniform1f(this.uniforms.uZoom, p.zoom);
+		gl.uniform2f(this.uniforms.uFocus, p.focus[0], p.focus[1]);
 		gl.bindVertexArray(this.emptyVao);
 		gl.drawArrays(gl.TRIANGLES, 0, 3);
 		gl.bindVertexArray(null);
