@@ -8,9 +8,11 @@ import type { NowPlaying, Track } from '#lib/types.js';
 
 type Fetch = typeof fetch;
 
-type SpotifyTrack = {
+export type SpotifyTrack = {
 	type?: string;
+	id: string;
 	name: string;
+	external_ids?: { isrc?: string };
 	artists: { name: string }[];
 	album: { name: string; images: { url: string; width: number }[] };
 	external_urls: { spotify: string };
@@ -44,7 +46,7 @@ async function getAccessToken(fetch: Fetch): Promise<string> {
 	return accessToken.value;
 }
 
-async function spotifyGet(path: string, fetch: Fetch): Promise<Response> {
+export async function spotifyGet(path: string, fetch: Fetch): Promise<Response> {
 	const token = await getAccessToken(fetch);
 	return fetch(`https://api.spotify.com/v1${path}`, {
 		headers: { Authorization: `Bearer ${token}` }
@@ -52,7 +54,7 @@ async function spotifyGet(path: string, fetch: Fetch): Promise<Response> {
 }
 
 /** Adapter: Spotify's track object → the site's Track shape. */
-function toTrack(t: SpotifyTrack): Track {
+export function toTrack(t: SpotifyTrack): Track {
 	const images = [...t.album.images].sort((a, b) => a.width - b.width);
 	// The smallest image that is still at least 200px wide is plenty for a drop.
 	const image = images.find((i) => i.width >= 200) ?? images.at(-1);

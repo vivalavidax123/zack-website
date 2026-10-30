@@ -31,7 +31,7 @@ export type DropSettings = {
 /** Floats per instance: x, y, radius, vertical stretch. */
 export const INSTANCE_STRIDE = 4;
 /** Instance slots kept free after the rain for drops placed by pages. */
-export const RESERVED_INSTANCES = 16;
+export const RESERVED_INSTANCES = 40;
 
 /** A circle on the glass that rain avoids, such as a homepage drop. */
 export type Obstacle = { x: number; y: number; r: number };
@@ -71,9 +71,9 @@ export class DropSim {
 	}
 
 	/** Rain does not land on obstacles, and sliding drops that reach one are absorbed by it. */
-	setObstacles(obstacles: readonly Obstacle[]) {
+	setObstacles(obstacles: readonly Obstacle[], clearUnder = true) {
 		this.obstacles = obstacles;
-		this.drops = this.drops.filter((d) => !this.onObstacle(d.x, d.y, d.r));
+		if (clearUnder) this.drops = this.drops.filter((d) => !this.onObstacle(d.x, d.y, d.r));
 	}
 
 	step(dt: number, s: DropSettings) {
