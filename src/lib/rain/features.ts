@@ -95,8 +95,10 @@ export class FeatureDrops {
 			f.scale += (target - f.scale) * (1 - Math.exp(-dt * 10));
 
 			if (!f.drift) continue;
-			// Stop for the pointer so nobody has to chase a moving target.
-			const wanted = this.near(f) || f.id === this.hovered ? 0 : f.drift;
+			// Stop for the pointer so nobody has to chase a moving target. A hovered
+			// drop stops at once, so it can't glide out from under the cursor.
+			if (f.id === this.hovered) f.speed = 0;
+			const wanted = this.near(f) ? 0 : f.drift;
 			f.speed += (wanted - f.speed) * (1 - Math.exp(-dt * 6));
 			f.y += f.speed * dt;
 			if (f.y - f.r > this.height) f.y = -f.r;
