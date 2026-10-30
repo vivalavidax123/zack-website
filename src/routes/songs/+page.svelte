@@ -321,6 +321,7 @@
 			<img
 				src={selectedSong.imageUrl}
 				alt="Cover of {selectedSong.album}"
+				decoding="async"
 				width="200"
 				height="200"
 			/>

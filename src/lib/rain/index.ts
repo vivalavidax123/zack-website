@@ -169,7 +169,7 @@ export function createRain(
 	function zoomTo(to: number, ms: number, ease: (t: number) => number): Promise<void> {
 		tween?.done();
 		tween = null;
-		if (!running) {
+		if (!running || reducedMotion()) {
 			zoom = 0;
 			return Promise.resolve();
 		}

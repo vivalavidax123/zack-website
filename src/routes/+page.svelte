@@ -119,7 +119,7 @@
 
 <nav aria-label="Main" class:flat={rain.stats ? !rain.stats.webgl : false}>
 	{#if width}
-		{#each tabs as tab (tab.id)}
+		{#each tabs as tab, i (tab.id)}
 			{@const d = layout[tab.id]}
 			<a
 				class="drop"
@@ -137,10 +137,16 @@
 				onfocus={() => (hovered = tab.id)}
 				onblur={() => (hovered = null)}
 			>
-				<span class="label">{tab.label}</span>
+				<span class="label" style:--i={i}>{tab.label}</span>
 			</a>
 			{#if tab.id === 'now'}
-				<p class="now" style:left="{d.x}px" style:top="{d.y + d.r + 10}px" aria-live="polite">
+				<p
+					class="now"
+					style:--i={i}
+					style:left="{d.x}px"
+					style:top="{d.y + d.r + 10}px"
+					aria-live="polite"
+				>
 					{#if nowPlaying && nowPlaying.state !== 'unavailable'}
 						<span class="track">{nowPlaying.track.title}</span>
 						<span class="artist">{nowPlaying.track.artist}</span>
@@ -187,6 +193,18 @@
 		outline: 2px solid rgba(232, 239, 238, 0.85);
 		outline-offset: 6px;
 	}
+	/* Words arrive with their drops, which condense one after another. */
+	.label,
+	.now {
+		animation: condense 1.2s ease-out both;
+		animation-delay: calc(var(--i) * 0.18s + 0.35s);
+	}
+	@keyframes condense {
+		from {
+			opacity: 0;
+		}
+	}
+
 	.label {
 		font-style: italic;
 		font-size: clamp(15px, 1.6vw, 19px);
@@ -236,8 +254,10 @@
 	}
 
 	@media (prefers-reduced-motion: reduce) {
-		.label {
+		.label,
+		.now {
 			transition: none;
+			animation: none;
 		}
 	}
 </style>
