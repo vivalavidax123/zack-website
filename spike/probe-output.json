@@ -1,0 +1,349 @@
+{
+  "when": "2026-10-30T09:42:25.367Z",
+  "out": [
+    {
+      "advancedQuery": "artist:\"Radiohead\" track:\"Creep\"",
+      "advancedTotal": 0,
+      "query": "Radiohead track:\"Creep\"",
+      "total": 272,
+      "hits": [
+        {
+          "id": 138547415,
+          "artist": "Radiohead",
+          "title": "Creep",
+          "version": "",
+          "album": "Pablo Honey",
+          "isrc": "GBAYE9200070",
+          "rank": 978547,
+          "duration": 238
+        },
+        {
+          "id": 2794365,
+          "artist": "Stone Temple Pilots",
+          "title": "Creep",
+          "version": "",
+          "album": "Core",
+          "isrc": "USAT29200014",
+          "rank": 635535,
+          "duration": 332
+        },
+        {
+          "id": 65823405,
+          "artist": "Daniela Andrade",
+          "title": "Creep",
+          "version": "",
+          "album": "Covers, Vol. 1",
+          "isrc": "TCABN1306674",
+          "rank": 712640,
+          "duration": 214
+        },
+        {
+          "id": 2215315187,
+          "artist": "Radiohead",
+          "title": "Creep (Acoustic)",
+          "version": "(Acoustic)",
+          "album": "Creep EP",
+          "isrc": "GBAYE9300465",
+          "rank": 791820,
+          "duration": 258
+        },
+        {
+          "id": 1137168522,
+          "artist": "Nirvana",
+          "title": "Negative Creep",
+          "version": "",
+          "album": "Bleach (Deluxe Edition)",
+          "isrc": "USSUB0983407",
+          "rank": 463109,
+          "duration": 175
+        }
+      ],
+      "plainSearchTop": [
+        "138547415 Creep — Radiohead [Pablo Honey]",
+        "2215315187 Creep (Acoustic) — Radiohead [Creep EP]",
+        "138544263 Fake Plastic Trees — Radiohead [The Bends]"
+      ],
+      "roundTrip": {
+        "id": 138547415,
+        "title": "Creep",
+        "album": "Pablo Honey",
+        "sameId": true
+      }
+    },
+    {
+      "advancedQuery": "artist:\"Fleetwood Mac\" track:\"Dreams\"",
+      "advancedTotal": 0,
+      "query": "Fleetwood Mac track:\"Dreams\"",
+      "total": 273,
+      "hits": [
+        {
+          "id": 561836,
+          "artist": "Eurythmics",
+          "title": "Sweet Dreams (Are Made of This) (2005 Remaster)",
+          "version": "(2005 Remaster)",
+          "album": "Sweet Dreams (Are Made Of This)",
+          "isrc": "GBARL0300589",
+          "rank": 963940,
+          "duration": 216
+        },
+        {
+          "id": 63480987,
+          "artist": "Fleetwood Mac",
+          "title": "Dreams (2004 Remaster)",
+          "version": "(2004 Remaster)",
+          "album": "Rumours",
+          "isrc": "USWB10400046",
+          "rank": 907653,
+          "duration": 257
+        },
+        {
+          "id": 2892817641,
+          "artist": "JADE",
+          "title": "Angel Of My Dreams",
+          "version": "",
+          "album": "Angel Of My Dreams",
+          "isrc": "GBARL2400873",
+          "rank": 961768,
+          "duration": 197
+        },
+        {
+          "id": 1176439,
+          "artist": "The Cranberries",
+          "title": "Dreams",
+          "version": "",
+          "album": "Stars: The Best Of The Cranberries 1992-2002",
+          "isrc": "USIR29300080",
+          "rank": 835642,
+          "duration": 273
+        },
+        {
+          "id": 427638182,
+          "artist": "Green Day",
+          "title": "Boulevard of Broken Dreams",
+          "version": "",
+          "album": "Greatest Hits: God's Favorite Band",
+          "isrc": "USRE10400985",
+          "rank": 736178,
+          "duration": 262
+        }
+      ],
+      "plainSearchTop": [
+        "63480987 Dreams (2004 Remaster) — Fleetwood Mac [Rumours]",
+        "67549302 Dreams (Sessions, Roughs & Outtakes) — Fleetwood Mac [Rumours (Super Deluxe)]",
+        "67549275 Dreams (Live 1977) — Fleetwood Mac [Rumours (Super Deluxe)]"
+      ],
+      "roundTrip": {
+        "id": 8260,
+        "title": "Sweet Dreams (Are Made of This)",
+        "album": "Ultimate New Wave Party 1998",
+        "sameId": false
+      }
+    },
+    {
+      "advancedQuery": "artist:\"Queen\" track:\"Bohemian Rhapsody\"",
+      "advancedTotal": 0,
+      "query": "Queen track:\"Bohemian Rhapsody\"",
+      "total": 248,
+      "hits": [
+        {
+          "id": 4091937401,
+          "artist": "Queen",
+          "title": "Bohemian Rhapsody",
+          "version": "",
+          "album": "A Night At The Opera",
+          "isrc": "GBUM71029604",
+          "rank": 958949,
+          "duration": 354
+        },
+        {
+          "id": 129568048,
+          "artist": "Panic! At The Disco",
+          "title": "Bohemian Rhapsody",
+          "version": "",
+          "album": "Suicide Squad: The Album",
+          "isrc": "USAT21601936",
+          "rank": 466061,
+          "duration": 361
+        },
+        {
+          "id": 4298783512,
+          "artist": "Angelina Jordan",
+          "title": "Bohemian Rhapsody",
+          "version": "",
+          "album": "Bohemian Rhapsody",
+          "isrc": "QZFYY2065104",
+          "rank": 499348,
+          "duration": 148
+        },
+        {
+          "id": 4302893902,
+          "artist": "The Wiggles",
+          "title": "Bohemian Rhapsody",
+          "version": "",
+          "album": "ReWiggled (The Covers)",
+          "isrc": "AUAB02100617",
+          "rank": 49090,
+          "duration": 345
+        },
+        {
+          "id": 4017403301,
+          "artist": "VoicePlay",
+          "title": "Bohemian Rhapsody",
+          "version": "",
+          "album": "Queen in 5 Min",
+          "isrc": "QT6642659430",
+          "rank": 107381,
+          "duration": 30
+        }
+      ],
+      "plainSearchTop": [
+        "4091937401 Bohemian Rhapsody — Queen [A Night At The Opera]",
+        "4092342471 Bohemian Rhapsody (Live At Wembley Stadium / July 1986) — Queen [Live at Wembley Stadium]",
+        "4091936771 Bohemian Rhapsody (Live Aid) — Queen [Bohemian Rhapsody (The Original Soundtrack)]"
+      ],
+      "roundTrip": {
+        "id": 3541552051,
+        "title": "Bohemian Rhapsody (Remastered 2011)",
+        "album": "Songs You Need To Listen To Before You Die",
+        "sameId": false
+      }
+    },
+    {
+      "advancedQuery": "artist:\"Nirvana\" track:\"Smells Like Teen Spirit\"",
+      "advancedTotal": 0,
+      "query": "Nirvana track:\"Smells Like Teen Spirit\"",
+      "total": 247,
+      "hits": [
+        {
+          "id": 13791930,
+          "artist": "Nirvana",
+          "title": "Smells Like Teen Spirit",
+          "version": "",
+          "album": "Nevermind (Remastered)",
+          "isrc": "USGF19942501",
+          "rank": 985641,
+          "duration": 301
+        },
+        {
+          "id": 1543592472,
+          "artist": "Nirvana",
+          "title": "Smells Like Teen Spirit (Live In Del Mar, California/1991)",
+          "version": "(Live In Del Mar, California/1991)",
+          "album": "Nevermind (30th Anniversary Super Deluxe)",
+          "isrc": "USGF19610505",
+          "rank": 515524,
+          "duration": 289
+        },
+        {
+          "id": 1105768,
+          "artist": "Nirvana",
+          "title": "Smells Like Teen Spirit (Live In Del Mar, California/1991)",
+          "version": "(Live In Del Mar, California/1991)",
+          "album": "From The Muddy Banks Of The Wishkah (Live)",
+          "isrc": "USGF19610505",
+          "rank": 357696,
+          "duration": 287
+        },
+        {
+          "id": 1409015812,
+          "artist": "Malia J",
+          "title": "Smells Like Teen Spirit",
+          "version": "",
+          "album": "Smells Like Teen Spirit",
+          "isrc": "QZHNC2145712",
+          "rank": 693867,
+          "duration": 239
+        },
+        {
+          "id": 614447,
+          "artist": "The Bad Plus",
+          "title": "Smells Like Teen Spirit",
+          "version": "",
+          "album": "These Are The Vistas",
+          "isrc": "USSM10213173",
+          "rank": 183675,
+          "duration": 357
+        }
+      ],
+      "plainSearchTop": [
+        "13791930 Smells Like Teen Spirit — Nirvana [Nevermind (Remastered)]",
+        "1543592472 Smells Like Teen Spirit (Live In Del Mar, California/1991) — Nirvana [Nevermind (30th Anniversary Super Deluxe)]",
+        "605632792 Smells Like Teen Spirit — Shaka Ponk [Smells Like Teen Spirit]"
+      ],
+      "roundTrip": {
+        "id": 13693497,
+        "title": "Smells Like Teen Spirit",
+        "album": "Nevermind (Deluxe Edition)",
+        "sameId": false
+      }
+    },
+    {
+      "advancedQuery": "artist:\"Grouper\" track:\"Heavy Water/I'd Rather Be Sleeping\"",
+      "advancedTotal": 0,
+      "query": "Grouper track:\"Heavy Water/I'd Rather Be Sleeping\"",
+      "total": 3,
+      "hits": [
+        {
+          "id": 64428756,
+          "artist": "Grouper",
+          "title": "Heavy Water/I'd Rather Be Sleeping",
+          "version": "",
+          "album": "Dragging a Dead Deer Up a Hill",
+          "isrc": "USI4R1115074",
+          "rank": 417336,
+          "duration": 173
+        },
+        {
+          "id": 1228281942,
+          "artist": "Will Jones",
+          "title": "Heavy Water/I'd Rather Be Sleeping",
+          "version": "",
+          "album": "Heavy Water/I'd Rather Be Sleeping",
+          "isrc": "QZFZ42137555",
+          "rank": 18016,
+          "duration": 172
+        },
+        {
+          "id": 638273932,
+          "artist": "Nothing",
+          "title": "Heavy Water / I'd Rather Be Sleeping",
+          "version": "",
+          "album": "Heavy Water / I'd Rather Be Sleeping",
+          "isrc": "US2641908408",
+          "rank": 61386,
+          "duration": 248
+        }
+      ],
+      "plainSearchTop": [
+        "64428756 Heavy Water/I'd Rather Be Sleeping — Grouper [Dragging a Dead Deer Up a Hill]"
+      ],
+      "roundTrip": {
+        "id": 64428756,
+        "title": "Heavy Water/I'd Rather Be Sleeping",
+        "album": "Dragging a Dead Deer Up a Hill",
+        "sameId": true
+      }
+    }
+  ],
+  "preview": {
+    "url1": "https://cdnt-preview.dzcdn.net/api/1/1/b/9/c/0/b9c4cde36fbe176cc3e84dc08fc0611b.mp3?hdnea=exp=1793354242~acl=/api/1/1/b/9/c/0/b9c4cde36fbe176cc3e84dc08fc0611b.mp3*~data=user_id=0,application_id=42~hmac=e846fbe67353d2852cc7707b41583727ddfe5380bad1e6d7644a74053eb0037e",
+    "info1": {
+      "host": "cdnt-preview.dzcdn.net",
+      "params": [
+        "hdnea"
+      ],
+      "exp": "2026-10-30T09:57:22.000Z",
+      "lifetimeSec": 897
+    },
+    "url2": "https://cdnt-preview.dzcdn.net/api/1/1/b/9/c/0/b9c4cde36fbe176cc3e84dc08fc0611b.mp3?hdnea=exp=1793354246~acl=/api/1/1/b/9/c/0/b9c4cde36fbe176cc3e84dc08fc0611b.mp3*~data=user_id=0,application_id=42~hmac=a6b941774216c6b85ea950568cd37df813097bc772ad7190381e95115d28e61a",
+    "info2": {
+      "host": "cdnt-preview.dzcdn.net",
+      "params": [
+        "hdnea"
+      ],
+      "exp": "2026-10-30T09:57:26.000Z",
+      "lifetimeSec": 901
+    },
+    "sameUrl": false
+  }
+}

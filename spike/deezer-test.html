@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deezer Preview Test</title>
+<style>
+  body { font-family: system-ui, sans-serif; background: #111; color: #eee; max-width: 560px; margin: 32px auto; padding: 0 16px; }
+  button { display: block; width: 100%; margin: 8px 0; padding: 12px; font-size: 16px; text-align: left; background: #222; color: #eee; border: 1px solid #444; border-radius: 6px; cursor: pointer; }
+  button.playing { border-color: #6cf; }
+  #log { font: 12px/1.4 monospace; white-space: pre-wrap; color: #9a9; margin-top: 16px; }
+</style>
+</head>
+<body>
+<h1>Deezer preview test</h1>
+<p>Click a song: fresh preview URL fetched at click time, starts at climaxStart, 400 ms volume fade in/out. Click again (or another song) to fade out.</p>
+<div id="buttons"></div>
+<div id="log"></div>
+<script>
+  // Deezer track ids found by the probe; climaxStart is seconds into the 30 s preview clip.
+  const songs = [
+    { id: 138547415, label: 'Radiohead – Creep', climaxStart: 10 },
+    { id: 63480987, label: 'Fleetwood Mac – Dreams (2004 Remaster)', climaxStart: 10 },
+    { id: 4091937401, label: 'Queen – Bohemian Rhapsody', climaxStart: 10 },
+    { id: 13791930, label: 'Nirvana – Smells Like Teen Spirit', climaxStart: 10 },
+    { id: 1543592472, label: 'Nirvana – Smells Like Teen Spirit (Live, Del Mar 1991)', climaxStart: 10 },
+    { id: 64428756, label: 'Grouper – Heavy Water/I\'d Rather Be Sleeping', climaxStart: 10 },
+  ];
+  const FADE_MS = 400;
+  const audio = new Audio();
+  let current = null;
+  let fadeTimer = null;
+
+  const log = (msg) => { document.getElementById('log').textContent += msg + '\n'; };
+
+  function fadeTo(target, done) {
+    clearInterval(fadeTimer);
+    const start = audio.volume, t0 = performance.now();
+    fadeTimer = setInterval(() => {
+      const k = Math.min(1, (performance.now() - t0) / FADE_MS);
+      audio.volume = start + (target - start) * k;
+      if (k === 1) { clearInterval(fadeTimer); done && done(); }
+    }, 20);
+  }
+
+  function stop(then) {
+    if (!current) return then && then();
+    document.querySelector(`[data-id="${current.id}"]`).classList.remove('playing');
+    current = null;
+    fadeTo(0, () => { audio.pause(); then && then(); });
+  }
+
+  async function play(song) {
+    const t0 = performance.now();
+    const res = await fetch(`/api/preview/${song.id}`);
+    const { preview } = await res.json();
+    if (!preview) return log(`${song.label}: no preview`);
+    const exp = Number((preview.match(/exp=(\d+)/) || [])[1]);
+    audio.src = preview;
+    audio.volume = 0;
+    audio.addEventListener('loadedmetadata', () => { audio.currentTime = song.climaxStart; }, { once: true });
+    try {
+      await audio.play();
+    } catch (e) {
+      return log(`${song.label}: play() failed – ${e.name}: ${e.message}`);
+    }
+    current = song;
+    document.querySelector(`[data-id="${song.id}"]`).classList.add('playing');
+    fadeTo(1);
+    log(`${song.label}: playing in ${Math.round(performance.now() - t0)} ms, url expires ${exp ? new Date(exp * 1000).toLocaleTimeString() : '?'}`);
+  }
+
+  audio.addEventListener('error', () => log(`audio error: code ${audio.error && audio.error.code}`));
+
+  for (const song of songs) {
+    const b = document.createElement('button');
+    b.textContent = '▶ ' + song.label;
+    b.dataset.id = song.id;
+    b.onclick = () => {
+      const wasCurrent = current && current.id === song.id;
+      stop(() => { if (!wasCurrent) play(song); });
+    };
+    document.getElementById('buttons').appendChild(b);
+  }
+</script>
+</body>
+</html>

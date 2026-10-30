@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zack · Rainy Favourites</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #eef3f1;
+    --ink-soft: rgba(238, 243, 241, 0.66);
+    --glass: rgba(255, 255, 255, 0.06);
+    --glass-hover: rgba(255, 255, 255, 0.11);
+    --glass-edge: rgba(255, 255, 255, 0.16);
+    --accent: #bfe3d6;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: #0b1514;
+    color: var(--ink);
+    font-family: Inter, system-ui, sans-serif;
+    overflow-x: hidden;
+  }
+  /* Three stacked canvases: blurred scenery, static drops on the glass, sliding drops. */
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  #bg { z-index: 0; }
+  #glass { z-index: 1; }
+  #live { z-index: 2; pointer-events: none; }
+
+  main {
+    position: relative; z-index: 3;
+    min-height: 100%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 48px 16px;
+    gap: 22px;
+  }
+  .ring {
+    width: 88px; height: 88px; border-radius: 50%;
+    border: 5px solid var(--ink); background: transparent; color: var(--ink);
+    display: grid; place-items: center; cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.3s ease;
+  }
+  .ring:hover { transform: scale(1.05); box-shadow: 0 0 30px rgba(191, 227, 214, 0.25); }
+  .ring svg { width: 34px; height: 34px; fill: currentColor; }
+  h1 {
+    font-family: 'Cormorant Garamond', serif; font-weight: 600; font-variant: small-caps;
+    font-size: clamp(44px, 9vw, 76px); letter-spacing: 0.02em; line-height: 1; margin: 0;
+    text-shadow: 0 2px 24px rgba(0, 0, 0, 0.45);
+  }
+  .tagline {
+    font-family: 'Cormorant Garamond', serif; font-variant: small-caps; font-size: 20px;
+    margin: -8px 0 0; color: var(--ink-soft); letter-spacing: 0.04em;
+  }
+  .panel {
+    width: min(460px, 100%);
+    background: var(--glass);
+    border: 1px solid var(--glass-edge);
+    border-radius: 18px;
+    padding: 8px;
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  }
+  .song {
+    position: relative; overflow: hidden;
+    display: flex; align-items: center; gap: 12px; width: 100%;
+    padding: 12px 14px; border: 0; border-radius: 12px;
+    background: transparent; color: var(--ink); text-align: left; cursor: pointer;
+    font: inherit; transition: background 0.25s ease;
+  }
+  .song:hover { background: var(--glass-hover); }
+  .song.playing { background: rgba(191, 227, 214, 0.12); }
+  .song:disabled { cursor: default; opacity: 0.45; }
+  .song .icon { flex: none; width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--glass-edge); display: grid; place-items: center; }
+  .song .icon svg { width: 11px; height: 11px; fill: currentColor; }
+  .song.playing .icon { border-color: var(--accent); color: var(--accent); }
+  .song .text { min-width: 0; flex: 1; }
+  .song .title { display: block; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .song .artist { display: block; font-size: 13px; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .song .meta { flex: none; font-size: 12px; color: var(--ink-soft); }
+  .song .bar { position: absolute; left: 0; bottom: 0; height: 2px; width: 0; background: var(--accent); opacity: 0.8; }
+  .now {
+    font-size: 13px; color: var(--ink-soft);
+    padding: 8px 16px; border-radius: 999px;
+    background: var(--glass); border: 1px solid var(--glass-edge);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  }
+  .now .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #6b7f79; margin-right: 8px; vertical-align: 1px; }
+  .now.live .dot { background: #1ed760; box-shadow: 0 0 8px #1ed760; }
+  #log { font: 12px/1.4 monospace; white-space: pre-wrap; color: #cfa; max-width: 460px; }
+  @media (prefers-reduced-motion: reduce) { .ring, .song { transition: none; } }
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<canvas id="glass"></canvas>
+<canvas id="live"></canvas>
+
+<main>
+  <button class="ring" id="ring" aria-label="Play"></button>
+  <h1>Zack</h1>
+  <p class="tagline">songs for a rainy window</p>
+  <div class="panel" id="songs"></div>
+  <div class="now" id="now"><span class="dot"></span>Spotify: checking…</div>
+  <div id="log"></div>
+</main>
+
+<script>
+  /* ---------- Rain on glass ---------- */
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const bg = document.getElementById('bg'), glass = document.getElementById('glass'), live = document.getElementById('live');
+  const bgCtx = bg.getContext('2d'), glassCtx = glass.getContext('2d'), liveCtx = live.getContext('2d');
+  const scene = document.createElement('canvas'); // low-res blurred scenery, also sampled inside drops
+  const SCENE_SCALE = 0.25;
+  let W = 0, H = 0, dpr = 1, sliders = [], lastSpawn = 0, lastFrame = 0;
+
+  const rand = (a, b) => a + Math.random() * (b - a);
+
+  function paintScene() {
+    scene.width = Math.max(1, Math.round(W * SCENE_SCALE));
+    scene.height = Math.max(1, Math.round(H * SCENE_SCALE));
+    const g = scene.getContext('2d'), w = scene.width, h = scene.height;
+    g.fillStyle = '#0c1715';
+    g.fillRect(0, 0, w, h);
+    g.filter = `blur(${Math.round(Math.min(w, h) / 14)}px)`;
+    // [x, y, radius, colour]: misty sky through the trees, dark foliage, mossy ground
+    const blobs = [
+      [0.56, 0.12, 0.42, 'rgba(176, 198, 200, 0.75)'],
+      [0.66, 0.34, 0.24, 'rgba(206, 220, 218, 0.45)'],
+      [0.38, 0.22, 0.20, 'rgba(140, 168, 166, 0.45)'],
+      [0.10, 0.45, 0.45, 'rgba(14, 30, 26, 0.9)'],
+      [0.92, 0.50, 0.40, 'rgba(12, 26, 22, 0.9)'],
+      [0.20, 0.15, 0.25, 'rgba(70, 96, 92, 0.35)'],
+      [0.85, 0.20, 0.22, 'rgba(60, 86, 82, 0.30)'],
+      [0.28, 0.80, 0.35, 'rgba(26, 46, 34, 0.80)'],
+      [0.72, 0.95, 0.40, 'rgba(34, 52, 36, 0.70)'],
+      [0.50, 0.60, 0.18, 'rgba(70, 92, 88, 0.35)'],
+    ];
+    for (const [x, y, r, c] of blobs) {
+      const rad = r * Math.max(w, h);
+      const grad = g.createRadialGradient(x * w, y * h, 0, x * w, y * h, rad);
+      grad.addColorStop(0, c);
+      grad.addColorStop(1, c.replace(/[\d.]+\)$/, '0)'));
+      g.fillStyle = grad;
+      g.fillRect(0, 0, w, h);
+    }
+    // dark tree trunks
+    g.fillStyle = 'rgba(4, 10, 9, 0.55)';
+    for (const [x, tw] of [[0.07, 0.05], [0.2, 0.025], [0.84, 0.06], [0.95, 0.03], [0.31, 0.015]]) g.fillRect(x * w, 0, tw * w, h);
+    g.filter = 'none';
+    // vignette
+    const v = g.createRadialGradient(w / 2, h * 0.4, Math.min(w, h) * 0.2, w / 2, h * 0.5, Math.max(w, h) * 0.75);
+    v.addColorStop(0, 'rgba(0,0,0,0)');
+    v.addColorStop(1, 'rgba(0,0,0,0.45)');
+    g.fillStyle = v;
+    g.fillRect(0, 0, w, h);
+
+    bgCtx.imageSmoothingQuality = 'high';
+    bgCtx.drawImage(scene, 0, 0, W, H);
+  }
+
+  // A drop acts like a tiny lens: it shows a flipped, zoomed-out patch of the scenery behind it.
+  function drawDrop(ctx, x, y, r, stretch = 1) {
+    const ry = r * stretch;
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(x, y, r, ry, 0, 0, Math.PI * 2);
+    ctx.clip();
+    const span = r * 9 * SCENE_SCALE;
+    ctx.translate(x, y);
+    ctx.scale(1, -1);
+    ctx.drawImage(scene, x * SCENE_SCALE - span / 2, y * SCENE_SCALE - span / 2, span, span, -r, -ry, r * 2, ry * 2);
+    ctx.restore();
+
+    const shade = ctx.createRadialGradient(x, y - ry * 0.35, r * 0.1, x, y, Math.max(r, ry));
+    shade.addColorStop(0, 'rgba(255,255,255,0.08)');
+    shade.addColorStop(0.7, 'rgba(0,0,0,0.04)');
+    shade.addColorStop(1, 'rgba(0,0,0,0.42)');
+    ctx.fillStyle = shade;
+    ctx.beginPath();
+    ctx.ellipse(x, y, r, ry, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (r > 1.4) {
+      ctx.fillStyle = 'rgba(255,255,255,0.55)';
+      ctx.beginPath();
+      ctx.ellipse(x - r * 0.28, y - ry * 0.42, r * 0.22, ry * 0.14, -0.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function randomStaticDrop() {
+    const big = Math.random() < 0.08;
+    drawDrop(glassCtx, rand(0, W), rand(0, H), big ? rand(2.5, 5) : rand(0.6, 2));
+  }
+
+  function setup() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = innerWidth; H = innerHeight;
+    for (const c of [bg, glass, live]) {
+      c.width = Math.round(W * dpr);
+      c.height = Math.round(H * dpr);
+      c.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    paintScene();
+    glassCtx.clearRect(0, 0, W, H);
+    const count = Math.round((W * H) / 500);
+    for (let i = 0; i < count; i++) randomStaticDrop();
+    sliders = [];
+  }
+
+  function spawnSlider() {
+    sliders.push({ x: rand(0, W), y: rand(-20, H * 0.6), r: rand(3.5, 7), vy: 0, stall: rand(0, 1500), wobble: rand(0, 1000), sinceTrail: 0 });
+  }
+
+  function frame(t) {
+    const dt = Math.min(50, t - lastFrame || 16);
+    lastFrame = t;
+
+    // Fresh rain keeps landing on the glass.
+    if (Math.random() < 0.6) randomStaticDrop();
+
+    if (t - lastSpawn > rand(250, 900) && sliders.length < 14) { spawnSlider(); lastSpawn = t; }
+
+    liveCtx.clearRect(0, 0, W, H);
+    for (const d of sliders) {
+      if (d.stall > 0) {
+        d.stall -= dt;
+      } else {
+        const maxV = 0.04 + d.r * 0.035; // px per ms; heavier drops run faster
+        d.vy = Math.min(maxV, d.vy + 0.00025 * dt);
+        if (Math.random() < 0.004) { d.stall = rand(100, 700); d.vy = 0; } // drops catch on the glass
+        const dy = d.vy * dt;
+        d.y += dy;
+        d.x += Math.sin((t + d.wobble) / 220) * 0.15;
+        d.sinceTrail += dy;
+
+        // Wipe the glass along the path, so the drop leaves a clean streak behind it.
+        glassCtx.save();
+        glassCtx.globalCompositeOperation = 'destination-out';
+        glassCtx.beginPath();
+        glassCtx.ellipse(d.x, d.y - d.r * 0.5, d.r * 0.85, d.r * 1.1, 0, 0, Math.PI * 2);
+        glassCtx.fill();
+        glassCtx.restore();
+
+        if (d.sinceTrail > rand(10, 30)) {
+          drawDrop(glassCtx, d.x + rand(-1, 1), d.y - d.r * 1.6, rand(0.18, 0.32) * d.r);
+          d.r -= 0.05;
+          d.sinceTrail = 0;
+        }
+      }
+      drawDrop(liveCtx, d.x, d.y, d.r, d.vy > 0.05 ? 1.25 : 1.05);
+    }
+    sliders = sliders.filter((d) => d.y - d.r < H && d.r > 1.8);
+    requestAnimationFrame(frame);
+  }
+
+  setup();
+  let resizeTimer;
+  addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(setup, 150); });
+  if (!reduceMotion) requestAnimationFrame(frame);
+
+  /* ---------- Player ---------- */
+  const FADE_MS = 400;
+  const PLAY = '<svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg>';
+  const PAUSE = '<svg viewBox="0 0 24 24"><path d="M6 4h4.5v16H6zM13.5 4H18v16h-4.5z"/></svg>';
+  const audio = new Audio();
+  const ring = document.getElementById('ring');
+  let songs = [], current = null, fadeTimer = null, lastClick = 0;
+
+  const log = (msg) => { document.getElementById('log').textContent += msg + '\n'; };
+  const rowFor = (song) => document.querySelector(`.song[data-id="${song.deezerId}"]`);
+
+  function render() {
+    ring.innerHTML = current ? PAUSE : PLAY;
+    ring.setAttribute('aria-label', current ? 'Pause' : 'Play');
+    for (const song of songs) {
+      const row = rowFor(song);
+      if (!row || row.disabled) continue;
+      const on = current === song;
+      row.classList.toggle('playing', on);
+      row.querySelector('.icon').innerHTML = on ? PAUSE : PLAY;
+      if (!on) row.querySelector('.bar').style.width = '0';
+    }
+  }
+
+  function fadeTo(target, done) {
+    clearInterval(fadeTimer);
+    const start = audio.volume, t0 = performance.now();
+    fadeTimer = setInterval(() => {
+      const k = Math.min(1, (performance.now() - t0) / FADE_MS);
+      audio.volume = start + (target - start) * k;
+      if (k === 1) { clearInterval(fadeTimer); done && done(); }
+    }, 20);
+  }
+
+  function stop(then) {
+    if (!current) return then && then();
+    current = null;
+    fadeTo(0, () => { audio.pause(); then && then(); });
+  }
+
+  async function play(song, click) {
+    const { preview } = song.deezerId ? await (await fetch(`/api/preview/${song.deezerId}`)).json() : {};
+    if (click !== lastClick) return; // a newer click happened while fetching the URL
+    if (!preview) {
+      const row = rowFor(song);
+      row.disabled = true;
+      row.querySelector('.meta').textContent = 'no preview';
+      return;
+    }
+    audio.src = preview;
+    audio.volume = 0;
+    audio.addEventListener('loadedmetadata', () => { audio.currentTime = song.climaxStart; }, { once: true });
+    // Mark as current before play() resolves so a quick second click can stop/replace it.
+    current = song;
+    render();
+    try {
+      await audio.play();
+    } catch (e) {
+      // AbortError = another song was clicked while this one was still loading.
+      if (e.name !== 'AbortError') log(`${song.title}: play() failed – ${e.name}: ${e.message}`);
+      return;
+    }
+    if (current === song) fadeTo(1);
+  }
+
+  function toggle(song) {
+    const wasCurrent = current === song;
+    const click = ++lastClick;
+    stop(() => { if (!wasCurrent && click === lastClick) play(song, click); });
+    render();
+  }
+
+  audio.addEventListener('timeupdate', () => {
+    if (!current || !audio.duration) return;
+    rowFor(current).querySelector('.bar').style.width = `${(audio.currentTime / audio.duration) * 100}%`;
+  });
+  audio.addEventListener('ended', () => { current = null; render(); });
+  audio.addEventListener('error', () => log(`audio error: code ${audio.error && audio.error.code}`));
+
+  ring.onclick = () => { if (songs.length) toggle(current || songs[0]); };
+
+  fetch('/favourites.json').then((r) => r.json()).then((list) => {
+    songs = list;
+    const panel = document.getElementById('songs');
+    for (const song of songs) {
+      const row = document.createElement('button');
+      row.className = 'song';
+      row.dataset.id = song.deezerId;
+      row.innerHTML = '<span class="icon"></span><span class="text"><span class="title"></span><span class="artist"></span></span><span class="meta"></span><span class="bar"></span>';
+      row.querySelector('.title').textContent = song.title;
+      row.querySelector('.artist').textContent = song.artist;
+      row.querySelector('.meta').textContent = `${song.climaxStart}s`;
+      row.onclick = () => toggle(song);
+      panel.appendChild(row);
+    }
+    render();
+  });
+
+  fetch('/api/now-playing').then((r) => r.json()).then((np) => {
+    const el = document.getElementById('now');
+    el.classList.toggle('live', !!np.is_playing);
+    el.lastChild.textContent = np.is_playing
+      ? `On Spotify now: ${np.title} – ${np.artist}`
+      : 'Spotify: not playing' + (np.error ? ` (error ${np.error})` : '');
+  });
+</script>
+</body>
+</html>
