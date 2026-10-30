@@ -9,24 +9,24 @@
 
 	let {
 		config = {},
+		oncreate,
 		onstats
-	}: { config?: Partial<RainConfig>; onstats?: (stats: RainStats) => void } = $props();
+	}: {
+		config?: Partial<RainConfig>;
+		oncreate?: (controller: RainController) => void;
+		onstats?: (stats: RainStats) => void;
+	} = $props();
 
 	let canvas: HTMLCanvasElement;
-	let rain: RainController | undefined = $state();
 
 	onMount(() => {
 		const controller = createRain(canvas, $state.snapshot(config) as Partial<RainConfig>);
 		const off = controller.onStats((s) => onstats?.(s));
-		rain = controller;
+		oncreate?.(controller);
 		return () => {
 			off();
 			controller.destroy();
 		};
-	});
-
-	$effect(() => {
-		rain?.setConfig($state.snapshot(config) as Partial<RainConfig>);
 	});
 </script>
 
