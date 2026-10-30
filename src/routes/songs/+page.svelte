@@ -205,6 +205,20 @@
 {/if}
 
 {#if view === 'glass' && hoveredSong && box}
+	{#if hoveredSong.imageUrl}
+		<!-- The cover sits inside the drop, as if seen through the water. -->
+		{#key hoveredSong.id}
+			<img
+				class="cover"
+				src={hoveredSong.imageUrl}
+				alt=""
+				style:left="{box.x}px"
+				style:top="{box.y}px"
+				style:width="{box.r * 1.7}px"
+				style:height="{box.r * 1.7}px"
+			/>
+		{/key}
+	{/if}
 	<div class="card" style={cardStyle} aria-live="polite">
 		<span class="title">{hoveredSong.title}</span>
 		<span class="artist">{hoveredSong.artist}</span>
@@ -358,6 +372,25 @@
 		font-size: 14px;
 	}
 
+	.cover {
+		position: fixed;
+		transform: translate(-50%, -50%);
+		border-radius: 50%;
+		object-fit: cover;
+		pointer-events: none;
+		/* Soft edge, so the drop's own rim and shine still frame it. */
+		mask-image: radial-gradient(circle, #000 52%, transparent 71%);
+		opacity: 0.88;
+		filter: saturate(0.85) contrast(1.05);
+		animation: surface 0.35s ease-out;
+	}
+	@keyframes surface {
+		from {
+			opacity: 0;
+			scale: 0.8;
+		}
+	}
+
 	.card {
 		position: fixed;
 		display: grid;
@@ -435,6 +468,11 @@
 		display: block;
 		text-align: center;
 		font-style: italic;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.cover {
+			animation: none;
+		}
 	}
 	@media (max-width: 480px) {
 		li {
