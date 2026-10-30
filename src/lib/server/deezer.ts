@@ -1,7 +1,6 @@
 /**
  * Finds Deezer copies of songs and their 30-second previews.
- * Plain TypeScript with no SvelteKit imports, so `scripts/pick-favourites.ts`
- * can reuse it under Node.
+ * Plain TypeScript with no SvelteKit imports, so scripts can reuse it under Node.
  *
  * Phase 1 showed: an ISRC lookup finds the exact recording, but sometimes a copy
  * with no preview. Then a plain "artist title" search with an artist-name check

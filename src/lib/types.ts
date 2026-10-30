@@ -27,7 +27,7 @@ export type Song = {
 	album: string;
 	imageUrl: string | null;
 	spotifyUrl: string;
-	/** Favourites are hand-kept; recent ones come live from Spotify. */
+	/** Favourites are your top tracks of about six months; recent ones are lately and today. */
 	source: 'favourite' | 'recent';
 	/** Deezer track id for the preview, or null when Deezer has no playable copy. */
 	deezerId: number | null;

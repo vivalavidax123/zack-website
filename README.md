@@ -25,13 +25,15 @@ SPOTIFY_REFRESH_TOKEN=...
 
 Without them the site still runs and the drop says "Quiet for now". The refresh token comes from `spike/server.mjs` (`/login`).
 
-Favourites live in `src/lib/data/favourites.json`. To pick them again from your all-time top tracks (Node 22.18 or newer):
+The songs page needs the same credentials. Every song comes live from Spotify (refreshed every 10 minutes): favourites are your top tracks of about the last six months, then your top tracks of the last four weeks and your recent plays.
 
-```sh
-node scripts/pick-favourites.ts 12
+To start a song's preview at its best part, or give it a note, add it to `src/lib/data/song-notes.json` by Spotify track id:
+
+```json
+{ "4uLU6hMCjMI75M1A2tKUQC": { "climaxStart": 42, "note": "The one for rainy evenings" } }
 ```
 
-It keeps any `climaxStart` (seconds into the 30-second preview) and `note` you set by hand.
+`climaxStart` is seconds into Deezer's 30-second preview.
 
 ## How the rain works
 

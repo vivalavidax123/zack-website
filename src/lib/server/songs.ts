@@ -1,114 +1,115 @@
-import favourites from '#lib/data/favourites.json';
+import notes from '#lib/data/song-notes.json';
 import type { Song } from '#lib/types.js';
 import { matchOnDeezer } from './deezer.js';
 import { spotifyConfigured, spotifyGet, toTrack, type SpotifyTrack } from './spotify.js';
 
 type Fetch = typeof fetch;
 
-/** The hand-kept list in `src/lib/data/favourites.json`. Edit climaxStart and note there. */
-export type Favourite = {
-	spotifyId: string;
-	isrc: string;
-	title: string;
-	artist: string;
-	album: string;
-	imageUrl: string | null;
-	spotifyUrl: string;
-	deezerId: number | null;
-	climaxStart: number;
-	note?: string;
-};
+/**
+ * Optional hand edits in `src/lib/data/song-notes.json`, keyed by Spotify track id:
+ * `{ "4uLU6hMCjMI75M1A2tKUQC": { "climaxStart": 42, "note": "..." } }`.
+ * Songs without an entry start at DEFAULT_CLIMAX and have no note.
+ */
+type SongNote = { climaxStart?: number; note?: string };
 
+/** Favourites: your top tracks of about the last six months that have a Deezer preview. */
+const FAVOURITES = 12;
 /** How many songs the page shows in total, favourites first. */
 const MAX_SONGS = 25;
-/** Where a live song's preview starts when nobody has picked a moment. */
+/** Where a preview starts when nobody has picked a moment. */
 const DEFAULT_CLIMAX = 10;
-const FRESH_MS = 60 * 60 * 1000;
+/** Ask Spotify again after this long, so new listening shows up soon. */
+export const FRESH_SECONDS = 10 * 60;
 
 let cached: { songs: Song[]; at: number } | null = null;
+/** Deezer matches never change, so each song is matched once per server. */
 const deezerIds = new Map<string, number | null>();
 
-function fromFavourite(f: Favourite): Song {
-	return {
-		id: f.spotifyId,
-		title: f.title,
-		artist: f.artist,
-		album: f.album,
-		imageUrl: f.imageUrl,
-		spotifyUrl: f.spotifyUrl,
-		source: 'favourite',
-		deezerId: f.deezerId,
-		climaxStart: f.climaxStart,
-		note: f.note || undefined
-	};
+async function items(path: string, fetch: Fetch): Promise<SpotifyTrack[]> {
+	const res = await spotifyGet(path, fetch);
+	if (!res.ok) return [];
+	const body = (await res.json()) as { items: (SpotifyTrack | { track: SpotifyTrack })[] };
+	return body.items
+		.map((i) => ('track' in i ? i.track : i))
+		.filter((t) => (t.type ?? 'track') === 'track');
 }
 
-/** Top tracks first (what you love lately), then recent plays (what you played today). */
-async function liveTracks(fetch: Fetch): Promise<SpotifyTrack[]> {
-	const [top, recent] = await Promise.all([
-		spotifyGet('/me/top/tracks?time_range=short_term&limit=20', fetch),
-		spotifyGet('/me/player/recently-played?limit=30', fetch)
-	]);
-	const tracks: SpotifyTrack[] = [];
-	if (top.ok) tracks.push(...((await top.json()) as { items: SpotifyTrack[] }).items);
-	if (recent.ok) {
-		const body = (await recent.json()) as { items: { track: SpotifyTrack }[] };
-		tracks.push(...body.items.map((i) => i.track));
+async function deezerId(t: SpotifyTrack, fetch: Fetch): Promise<number | null> {
+	if (!deezerIds.has(t.id)) {
+		const { title, artist } = toTrack(t);
+		const match = await matchOnDeezer({ isrc: t.external_ids?.isrc, title, artist }, fetch);
+		deezerIds.set(t.id, match.deezerId);
 	}
-	return tracks.filter((t) => (t.type ?? 'track') === 'track');
+	return deezerIds.get(t.id) ?? null;
+}
+
+/** Match a handful at a time: Deezer allows about 50 requests per 5 seconds. */
+async function withDeezer(tracks: SpotifyTrack[], fetch: Fetch) {
+	const out: { track: SpotifyTrack; deezerId: number | null }[] = [];
+	for (let i = 0; i < tracks.length; i += 5) {
+		const batch = tracks.slice(i, i + 5);
+		const ids = await Promise.all(batch.map((t) => deezerId(t, fetch)));
+		out.push(...batch.map((track, k) => ({ track, deezerId: ids[k] })));
+	}
+	return out;
 }
 
 /** Adapter: a Spotify track plus its Deezer match → the site's Song shape. */
-async function toSong(t: SpotifyTrack, fetch: Fetch): Promise<Song> {
-	const track = toTrack(t);
-	if (!deezerIds.has(t.id)) {
-		const match = await matchOnDeezer(
-			{ isrc: t.external_ids?.isrc, title: track.title, artist: track.artist },
-			fetch
-		);
-		deezerIds.set(t.id, match.deezerId);
-	}
+function toSong(t: SpotifyTrack, deezerId: number | null, source: Song['source']): Song {
+	const note = (notes as Record<string, SongNote>)[t.id];
 	return {
 		id: t.id,
-		...track,
-		source: 'recent',
-		deezerId: deezerIds.get(t.id) ?? null,
-		climaxStart: DEFAULT_CLIMAX
+		...toTrack(t),
+		source,
+		deezerId,
+		climaxStart: note?.climaxStart ?? DEFAULT_CLIMAX,
+		note: note?.note || undefined
 	};
 }
 
 /**
- * Favourites plus live listening, without duplicates, up to MAX_SONGS.
- * Cache-aside for an hour: Spotify and Deezer are asked at most once an hour per server.
+ * Everything comes live from Spotify: favourites are your top tracks of about
+ * the last six months, then what you love lately and what you played today,
+ * without duplicates. Cache-aside for FRESH_SECONDS, so a busy page still asks
+ * Spotify rarely.
  */
 export async function getSongs(fetch: Fetch): Promise<Song[]> {
-	if (cached && Date.now() - cached.at < FRESH_MS) return cached.songs;
+	if (cached && Date.now() - cached.at < FRESH_SECONDS * 1000) return cached.songs;
+	if (!spotifyConfigured()) return [];
 
-	const songs = (favourites as Favourite[]).map(fromFavourite);
-	const seen = new Set(songs.map((s) => s.id));
-	const seenIsrc = new Set((favourites as Favourite[]).map((f) => f.isrc));
+	try {
+		const [favourite, lately, recent] = await Promise.all([
+			items('/me/top/tracks?time_range=medium_term&limit=20', fetch),
+			items('/me/top/tracks?time_range=short_term&limit=20', fetch),
+			items('/me/player/recently-played?limit=30', fetch)
+		]);
 
-	if (spotifyConfigured()) {
-		try {
-			const picks = (await liveTracks(fetch))
-				.filter((t) => {
-					const isrc = t.external_ids?.isrc;
-					if (seen.has(t.id) || (isrc && seenIsrc.has(isrc))) return false;
-					seen.add(t.id);
-					if (isrc) seenIsrc.add(isrc);
-					return true;
-				})
-				.slice(0, Math.max(0, MAX_SONGS - songs.length));
-			// Deezer allows about 50 requests per 5 seconds; a handful at a time stays well clear.
-			for (let i = 0; i < picks.length; i += 5) {
-				songs.push(...(await Promise.all(picks.slice(i, i + 5).map((t) => toSong(t, fetch)))));
-			}
-		} catch (err) {
-			console.error(err);
-			// Favourites alone still make a page.
-		}
+		// The same recording can have several Spotify ids, so also compare ISRCs.
+		const seen = new Set<string>();
+		const fresh = (t: SpotifyTrack) => {
+			const keys = [t.id, t.external_ids?.isrc].filter((k): k is string => Boolean(k));
+			if (keys.some((k) => seen.has(k))) return false;
+			keys.forEach((k) => seen.add(k));
+			return true;
+		};
+
+		// A favourite with no preview would be a silent big drop; take the next one instead.
+		const favourites = (await withDeezer(favourite.filter(fresh), fetch))
+			.filter((f) => f.deezerId)
+			.slice(0, FAVOURITES);
+		const others = [...lately, ...recent]
+			.filter(fresh)
+			.slice(0, Math.max(0, MAX_SONGS - favourites.length));
+
+		const songs = [
+			...favourites.map((f) => toSong(f.track, f.deezerId, 'favourite')),
+			...(await withDeezer(others, fetch)).map((r) => toSong(r.track, r.deezerId, 'recent'))
+		];
+		cached = { songs, at: Date.now() };
+		return songs;
+	} catch (err) {
+		console.error(err);
+		// Spotify is down or slow: show the last good list rather than nothing.
+		return cached?.songs ?? [];
 	}
-
-	cached = { songs, at: Date.now() };
-	return songs;
 }
