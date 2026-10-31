@@ -133,14 +133,14 @@ export const projects: Project[] = [
 		meta: ['Solo developer', 'Working prototype', 'Web app'],
 		gallery: [
 			{
-				src: '/projects/shots/your-renting-helper/1.webp',
-				alt: 'Your Renting Helper landing page with an address search box, example suburbs and a sample score card',
-				caption: 'Start with an address or one of the example suburbs.'
-			},
-			{
 				src: '/projects/shots/your-renting-helper/2.webp',
 				alt: 'Result for Brunswick VIC showing an overall score of 93, eight category score cards and a map of nearby places',
 				caption: 'A result: overall score, eight category scores and the amenity map.'
+			},
+			{
+				src: '/projects/shots/your-renting-helper/1.webp',
+				alt: 'Your Renting Helper landing page with an address search box, example suburbs and a sample score card',
+				caption: 'Start with an address or one of the example suburbs.'
 			},
 			{
 				src: '/projects/shots/your-renting-helper/3.webp',
