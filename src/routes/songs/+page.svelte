@@ -175,7 +175,7 @@
 </script>
 
 <svelte:head>
-	<title>Songs · Zack</title>
+	<title>Songs · Zeming Xia</title>
 	<meta
 		name="description"
 		content="The songs I keep coming back to, and what I've played lately."
@@ -200,7 +200,7 @@
 {/if}
 
 <header>
-	<a class="home" href="/">Zack</a>
+	<a class="home" href="/">Zeming Xia</a>
 	<h1>Songs</h1>
 	<p>
 		{#if view === 'list'}

@@ -15,6 +15,25 @@ export type Project = {
 
 export const projects: Project[] = [
 	{
+		id: 'zemingxia-com',
+		name: 'This website',
+		summary: 'Rain on a window, with the songs I keep coming back to.',
+		description:
+			'My personal site, built as a rainy window. Every page is drops on the glass, and the Songs page turns my Spotify listening into drops you can hover to hear a preview.',
+		highlights: [
+			'A WebGL2 rain-on-glass engine written from scratch, with drops that refract the scene behind them',
+			'Songs load live from Spotify, with 30-second previews matched on Deezer by ISRC',
+			'A small server layer that keeps the Spotify keys private and caches answers at the edge',
+			'Page transitions that zoom through the glass toward what you clicked'
+		],
+		stack: ['SvelteKit', 'Svelte 5', 'TypeScript', 'WebGL2', 'Spotify API', 'Deezer API', 'Vercel'],
+		when: 'Oct 2026',
+		links: [
+			{ label: 'Live', href: 'https://zemingxia.com' },
+			{ label: 'Code', href: 'https://github.com/vivalavidax123/zack-website' }
+		]
+	},
+	{
 		id: 'your-renting-helper',
 		name: 'Your Renting Helper',
 		summary: 'How convenient is a rental for everyday life?',

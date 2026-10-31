@@ -66,7 +66,7 @@
 </script>
 
 <svelte:head>
-	<title>Projects · Zack</title>
+	<title>Projects · Zeming Xia</title>
 	<meta name="description" content="Things I've built." />
 </svelte:head>
 
@@ -77,7 +77,7 @@
 />
 
 <header>
-	<a class="home" href="/">Zack</a>
+	<a class="home" href="/">Zeming Xia</a>
 	<h1>Projects</h1>
 	<p>Things I've built. Open a drop to read more.</p>
 </header>
