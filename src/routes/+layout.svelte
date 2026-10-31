@@ -2,6 +2,7 @@
 	import '../app.css';
 	import { afterNavigate, onNavigate } from '$app/navigation';
 	import RainCanvas from '#lib/components/RainCanvas.svelte';
+	import RainToggle from '#lib/components/RainToggle.svelte';
 	import { RainHandle, provideRain } from '#lib/rain-handle.svelte.js';
 	import type { LayoutProps } from './$types';
 
@@ -62,6 +63,8 @@
 <div class="page" class:leaving>
 	{@render children()}
 </div>
+
+<RainToggle />
 
 <style>
 	.page {
