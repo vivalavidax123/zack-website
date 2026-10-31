@@ -44,13 +44,10 @@
 
 <svelte:head>
 	<!-- What a link preview shows when the site is shared in a chat or post. -->
-	<meta property="og:site_name" content="Zack" />
+	<meta property="og:site_name" content="Zeming Xia" />
 	<meta property="og:type" content="website" />
-	<meta property="og:title" content="Zack" />
-	<meta
-		property="og:description"
-		content="Rain on the window, and the songs I keep coming back to."
-	/>
+	<meta property="og:title" content="Zeming Xia" />
+	<meta property="og:description" content="Rain, my stuff and the songs I keep coming back to." />
 	<meta property="og:image" content="{SITE}/og.jpg" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />

@@ -2,7 +2,7 @@
 export type Milestone = { when: string; title: string; place: string; detail?: string };
 
 export const about = {
-	name: 'Zack',
+	name: 'Zeming Xia',
 	intro:
 		'Software engineering graduate, now studying a Master of IT at the University of Melbourne.',
 	/** Newest first. */

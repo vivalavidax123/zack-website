@@ -106,15 +106,15 @@
 </script>
 
 <svelte:head>
-	<title>Zack</title>
-	<meta name="description" content="Rain on the window, and the songs I keep coming back to." />
+	<title>Zeming Xia</title>
+	<meta name="description" content="Rain, my stuff and the songs I keep coming back to." />
 </svelte:head>
 
 <svelte:window bind:innerWidth={width} bind:innerHeight={height} />
 
 <header class="masthead">
-	<h1>Zack</h1>
-	<p>Rain on the window, and the songs I keep coming back to.</p>
+	<h1>Zeming Xia</h1>
+	<p>Rain, my stuff and the songs I keep coming back to.</p>
 </header>
 
 <nav aria-label="Main" class:flat={rain.stats ? !rain.stats.webgl : false}>

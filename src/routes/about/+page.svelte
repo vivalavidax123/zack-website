@@ -3,12 +3,12 @@
 </script>
 
 <svelte:head>
-	<title>About · Zack</title>
-	<meta name="description" content="About Zack: study, timeline and where to find me." />
+	<title>About · Zeming Xia</title>
+	<meta name="description" content="About Zeming Xia: study, timeline and where to find me." />
 </svelte:head>
 
 <header>
-	<a class="home" href="/">Zack</a>
+	<a class="home" href="/">Zeming Xia</a>
 	<h1>About</h1>
 </header>
 

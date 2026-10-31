@@ -3,7 +3,7 @@
 </script>
 
 <svelte:head>
-	<title>{title} · Zack</title>
+	<title>{title} · Zeming Xia</title>
 </svelte:head>
 
 <main>
