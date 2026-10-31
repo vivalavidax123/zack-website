@@ -2,7 +2,7 @@
 
 A personal site where everything is rain on a window. Songs are drops on the glass; hover one to hear its best few seconds.
 
-Live at **https://zack-website.vercel.app**. Every merge to `main` deploys there automatically, and every pull request gets a Vercel preview link.
+Live at **https://zemingxia.com**. Every merge to `main` deploys there automatically, and every pull request gets a Vercel preview link.
 
 ## Run it
 

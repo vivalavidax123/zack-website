@@ -12,7 +12,7 @@
 	provideRain(rain);
 
 	/** Link previews need an absolute address for their image. */
-	const SITE = 'https://zack-website.vercel.app';
+	const SITE = 'https://zemingxia.com';
 
 	/** How long the old page takes to fade, even when the glass stays still. */
 	const FADE_MS = 220;
