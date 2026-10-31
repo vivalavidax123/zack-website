@@ -76,7 +76,9 @@
 	onMount(() => {
 		player = new PreviewPlayer((s) => (preview = s));
 		// The first few favourites are the likeliest first hovers.
-		for (const song of songs.slice(0, 3)) void player.warm(song.id, song.deezerId);
+		// Links only: the sound itself loads once the pointer comes near a drop,
+		// so opening the page on mobile data stays light.
+		for (const song of songs.slice(0, 3)) void player.warm(song.id, song.deezerId, false);
 		return () => player?.destroy();
 	});
 

@@ -38,10 +38,10 @@ export class PreviewPlayer {
 	 * server can take a second or two to send a file it hasn't served lately,
 	 * so this is what makes a hover sound instant.
 	 */
-	async warm(id: string, deezerId: number | null) {
+	async warm(id: string, deezerId: number | null, audio = true) {
 		if (!deezerId) return;
 		const url = await this.url(deezerId);
-		if (url) this.element(id, url);
+		if (url && audio && !saveData()) this.element(id, url);
 	}
 
 	async play(id: string, deezerId: number | null, startAt: number) {
@@ -183,4 +183,11 @@ function volumeWorks(): boolean {
 		canFade = probe.volume === 0.5;
 	}
 	return canFade;
+}
+
+/** The visitor asked their browser to use less data, so only load sound when asked to play. */
+function saveData(): boolean {
+	return (
+		(navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData === true
+	);
 }
