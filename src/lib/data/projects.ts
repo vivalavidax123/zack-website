@@ -1,5 +1,12 @@
-/** One project on the Projects page. Add another entry here and it appears as a new drop. */
+/** A screenshot on a project's own page. */
+export type Shot = { src: string; alt: string; caption: string };
+
+/**
+ * One project on the Projects page. Add another entry here and it appears as a
+ * new drop, with its own page at /projects/<id>.
+ */
 export type Project = {
+	/** Also the address of its page, so keep it short and lowercase. */
 	id: string;
 	name: string;
 	/** One line, shown when you hover the drop. */
@@ -11,11 +18,17 @@ export type Project = {
 	when: string;
 	image?: { src: string; alt: string };
 	links: { label: string; href: string }[];
+	/** The small line under the title on its page: role, status, kind of project. */
+	meta?: string[];
+	/** Screenshots on its page, in order. */
+	gallery?: Shot[];
+	/** The write-up on its page: a few short sections, each one or two paragraphs. */
+	story?: { heading: string; paragraphs: string[] }[];
 };
 
 export const projects: Project[] = [
 	{
-		id: 'zemingxia-com',
+		id: 'this-website',
 		name: 'This website',
 		summary: 'Rain on a window, with the songs I keep coming back to.',
 		description:
@@ -35,6 +48,30 @@ export const projects: Project[] = [
 		links: [
 			{ label: 'Live', href: 'https://zemingxia.com' },
 			{ label: 'Code', href: 'https://github.com/vivalavidax123/zack-website' }
+		],
+		meta: ['Solo developer', 'Live', 'Personal website'],
+		story: [
+			{
+				heading: 'What it is',
+				paragraphs: [
+					'My personal site, designed as a window on a rainy night. Instead of a menu, every page is a few large drops on the glass: the home page links to Songs, Projects and About, and the Songs page turns the music I have been listening to into drops you can hover to hear.',
+					'I wanted something that felt like mine rather than a template, and that showed the kind of front-end and graphics work I enjoy.'
+				]
+			},
+			{
+				heading: 'How it works',
+				paragraphs: [
+					'The rain is a small WebGL2 engine I wrote from scratch. It draws every drop into an offscreen texture, then a second pass bends the blurred scene behind the glass through those drops, so each one acts like a tiny lens. Drops land, merge, slide down and leave trails, and the big "feature" drops that carry links drift slowly and pause near the pointer.',
+					'Songs come live from my Spotify account through a small server layer on Vercel, which keeps the keys private. Spotify no longer offers previews, so each track is matched on Deezer, first by its ISRC code and then by title and artist, and the 30-second preview fades in when you hover its drop. Answers are cached at the edge for ten minutes, so the page stays fast without asking Spotify on every visit.'
+				]
+			},
+			{
+				heading: 'Challenges and what I learned',
+				paragraphs: [
+					'Keeping the rain smooth was the main challenge: it has to hold 60 frames per second while the page stays responsive, which meant instanced drawing, a fixed time step and pausing whenever the tab is hidden or the visitor prefers reduced motion. Audio was the other: browsers block sound until a click, and iOS ignores volume changes, so the fades and the rain sound run through Web Audio.',
+					'Every page scores 97 to 100 in Lighthouse, and the Songs page went from about 1.4 MB to under 70 KB on phones by loading previews only when the pointer comes near a drop.'
+				]
+			}
 		]
 	},
 	{

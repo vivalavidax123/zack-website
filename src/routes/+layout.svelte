@@ -28,7 +28,11 @@
 	 */
 	onNavigate((nav) => {
 		if (!nav.to || nav.to.url.pathname === nav.from?.url.pathname) return;
-		const back = nav.to.url.pathname === '/' || (nav.type === 'popstate' && (nav.delta ?? 0) < 0);
+		const from = nav.from?.url.pathname ?? '';
+		const to = nav.to.url.pathname;
+		// Going up a level (a project page back to Projects) is a step back too.
+		const back =
+			to === '/' || from.startsWith(to + '/') || (nav.type === 'popstate' && (nav.delta ?? 0) < 0);
 		const toward = nav.type === 'link' ? (lastPress ?? undefined) : undefined;
 		leaving = true;
 		return Promise.all([

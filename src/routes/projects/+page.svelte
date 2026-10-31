@@ -138,6 +138,7 @@
 			{#each open.stack as tool (tool)}<li>{tool}</li>{/each}
 		</ul>
 		<div class="links">
+			<a class="more" href="/projects/{open.id}">Learn more</a>
 			{#each open.links as link (link.href)}
 				<a href={link.href} target="_blank" rel="noreferrer">{link.label}</a>
 			{/each}
@@ -315,6 +316,9 @@
 		padding: 7px 14px;
 		text-decoration: none;
 		cursor: pointer;
+	}
+	.links .more {
+		background: rgba(232, 239, 238, 0.14);
 	}
 	.links a:hover,
 	.close:hover {
