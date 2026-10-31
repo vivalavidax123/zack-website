@@ -1,6 +1,6 @@
 /**
- * A soft loop of rain behind the whole site. Off until the visitor turns it
- * on, and remembered for their next visit.
+ * A soft loop of rain behind the whole site. On by default, starting with the
+ * visitor's first click; turning it off is remembered for their next visit.
  *
  * It plays through Web Audio rather than an <audio> element for two reasons:
  * a looping buffer has no gap at the seam, and a gain node can fade and duck
@@ -25,12 +25,15 @@ class RainSound {
 	private ducked = false;
 	on = false;
 
-	/** Whether the visitor left it on last time. Browsers still need a click before it can play. */
+	/**
+	 * On unless the visitor turned it off before. Browsers still need a click
+	 * or key press before any sound can play.
+	 */
 	wanted(): boolean {
 		try {
-			return localStorage.getItem(STORE_KEY) === 'on';
+			return localStorage.getItem(STORE_KEY) !== 'off';
 		} catch {
-			return false;
+			return true;
 		}
 	}
 

@@ -4,8 +4,8 @@
 
 	let on = $state(false);
 
-	// Someone who left the rain on last time hears it again from their first
-	// click or key press: browsers allow no sound before that.
+	// The rain starts with the first click or key press: browsers allow no
+	// sound before that. Visitors who turned it off keep it off.
 	onMount(() => {
 		if (!rainSound.wanted()) return;
 		on = true;
