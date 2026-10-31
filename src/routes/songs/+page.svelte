@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { cubicOut } from 'svelte/easing';
 	import { fade } from 'svelte/transition';
 	import { PreviewPlayer, type PreviewState } from '#lib/audio/preview.js';
 	import type { FeatureBox } from '#lib/rain/index.js';
 	import { useRain } from '#lib/rain-handle.svelte.js';
+	import { splash } from '#lib/transitions/splash.js';
 	import { songDrops } from '#lib/songs/layout.js';
 	import type { Song } from '#lib/types.js';
 	import type { PageProps } from './$types';
@@ -152,28 +152,6 @@
 
 	const hoveredSong = $derived(hovered ? byId.get(hovered) : undefined);
 	const selectedSong = $derived(selected ? byId.get(selected) : undefined);
-
-	const stillQuery = '(prefers-reduced-motion: reduce)';
-
-	/** Svelte transition: reveal the panel as a circle growing from the drop. */
-	function splash(node: HTMLElement, from: { x: number; y: number; r: number }) {
-		const rect = node.getBoundingClientRect();
-		const cx = from.x - rect.left;
-		const cy = from.y - rect.top;
-		const reach = Math.max(
-			...[
-				[0, 0],
-				[rect.width, 0],
-				[0, rect.height],
-				[rect.width, rect.height]
-			].map(([x, y]) => Math.hypot(x - cx, y - cy))
-		);
-		return {
-			duration: matchMedia(stillQuery).matches ? 0 : 520,
-			easing: cubicOut,
-			css: (t: number) => `clip-path: circle(${from.r + (reach - from.r) * t}px at ${cx}px ${cy}px)`
-		};
-	}
 
 	/** Put the card beside the drop, on whichever side has room. */
 	const cardStyle = $derived.by(() => {
