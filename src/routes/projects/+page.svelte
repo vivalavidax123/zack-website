@@ -2,6 +2,7 @@
 	import { projects, type Project } from '#lib/data/projects.js';
 	import type { FeatureDrop } from '#lib/rain/index.js';
 	import { useRain } from '#lib/rain-handle.svelte.js';
+	import { dialog } from '#lib/actions/dialog.js';
 	import { splash, type SplashOrigin } from '#lib/transitions/splash.js';
 
 	const rain = useRain();
@@ -62,11 +63,6 @@
 		open = null;
 		opener?.focus();
 	}
-
-	/** Move focus into the panel when it opens, so the keyboard lands where the reader is. */
-	function focusIn(node: HTMLElement) {
-		node.focus({ preventScroll: true });
-	}
 </script>
 
 <svelte:head>
@@ -125,7 +121,7 @@
 		role="dialog"
 		aria-label={open.name}
 		tabindex="-1"
-		use:focusIn
+		use:dialog
 		transition:splash={origin}
 	>
 		<button class="close" type="button" aria-label="Close" onclick={close}>×</button>

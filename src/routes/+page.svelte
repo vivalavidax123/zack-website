@@ -206,6 +206,7 @@
 	}
 
 	.label {
+		text-align: center;
 		font-style: italic;
 		font-size: clamp(15px, 1.6vw, 19px);
 		letter-spacing: 0.03em;
