@@ -49,9 +49,23 @@
 		};
 	});
 
-	function show(p: Project, d: FeatureDrop) {
+	let opener: HTMLElement | null = null;
+
+	function show(p: Project, d: FeatureDrop, e: MouseEvent) {
 		origin = { x: d.x, y: d.y, r: d.r };
+		opener = e.currentTarget as HTMLElement;
 		open = p;
+	}
+
+	/** Close the panel and put focus back on the drop that opened it. */
+	function close() {
+		open = null;
+		opener?.focus();
+	}
+
+	/** Move focus into the panel when it opens, so the keyboard lands where the reader is. */
+	function focusIn(node: HTMLElement) {
+		node.focus({ preventScroll: true });
 	}
 </script>
 
@@ -63,7 +77,7 @@
 <svelte:window
 	bind:innerWidth={width}
 	bind:innerHeight={height}
-	onkeydown={(e) => e.key === 'Escape' && (open = null)}
+	onkeydown={(e) => e.key === 'Escape' && open && close()}
 />
 
 <header>
@@ -89,7 +103,7 @@
 				onpointerleave={() => (hovered = null)}
 				onfocus={() => (hovered = project.id)}
 				onblur={() => (hovered = null)}
-				onclick={() => show(project, d)}
+				onclick={(e) => show(project, d, e)}
 			>
 				<span class="label" style:--i={i}>{project.name}</span>
 			</button>
@@ -106,8 +120,15 @@
 </main>
 
 {#if open}
-	<div class="panel" role="dialog" aria-label={open.name} transition:splash={origin}>
-		<button class="close" type="button" aria-label="Close" onclick={() => (open = null)}>×</button>
+	<div
+		class="panel"
+		role="dialog"
+		aria-label={open.name}
+		tabindex="-1"
+		use:focusIn
+		transition:splash={origin}
+	>
+		<button class="close" type="button" aria-label="Close" onclick={close}>×</button>
 		{#if open.image}
 			<img src={open.image.src} alt={open.image.alt} width="960" height="669" decoding="async" />
 		{/if}
@@ -233,6 +254,9 @@
 		font:
 			14px/1.55 system-ui,
 			sans-serif;
+	}
+	.panel:focus {
+		outline: none;
 	}
 	.panel img {
 		width: 100%;

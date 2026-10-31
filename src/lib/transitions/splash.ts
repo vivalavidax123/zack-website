@@ -20,7 +20,8 @@ export function splash(node: HTMLElement, from: SplashOrigin) {
 		].map(([x, y]) => Math.hypot(x - cx, y - cy))
 	);
 	return {
-		duration: matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 520,
+		// Quick, because the panel can only be clicked where it is already revealed.
+		duration: matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 400,
 		easing: cubicOut,
 		css: (t: number) => `clip-path: circle(${from.r + (reach - from.r) * t}px at ${cx}px ${cy}px)`
 	};
