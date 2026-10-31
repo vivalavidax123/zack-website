@@ -14,6 +14,12 @@ export type PreviewState = {
 };
 
 const FADE_MS = 400;
+/**
+ * How loud a preview plays, from 0 (silent) to 1 (the browser's full volume).
+ * Deezer previews are mastered loud, so a little under half sits comfortably
+ * under whatever else you're listening to.
+ */
+export const PREVIEW_VOLUME = 0.4;
 /** Deezer links last about 15 minutes; refetch after 10 to be safe. */
 const URL_FRESH_MS = 10 * 60 * 1000;
 /** Keep a few elements around: the warmed neighbours and recent songs. */
@@ -74,7 +80,7 @@ export class PreviewPlayer {
 			return;
 		}
 		if (this.wanted !== id) return;
-		this.fadeTo(entry, 1);
+		this.fadeTo(entry, PREVIEW_VOLUME);
 		this.set(id, 'playing');
 	}
 
