@@ -28,6 +28,10 @@ export const projects: Project[] = [
 		],
 		stack: ['SvelteKit', 'Svelte 5', 'TypeScript', 'WebGL2', 'Spotify API', 'Deezer API', 'Vercel'],
 		when: 'Oct 2026',
+		image: {
+			src: '/projects/this-website.webp',
+			alt: 'The Songs page: songs as raindrops on a rainy window, one showing its album cover'
+		},
 		links: [
 			{ label: 'Live', href: 'https://zemingxia.com' },
 			{ label: 'Code', href: 'https://github.com/vivalavidax123/zack-website' }
