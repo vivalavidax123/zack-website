@@ -3,11 +3,18 @@ export type Milestone = { when: string; title: string; place: string; detail?: s
 
 export const about = {
 	name: 'Zack',
-	intro: 'TODO: a short intro.',
+	intro:
+		'Software engineering graduate, now studying a Master of IT at the University of Melbourne.',
+	/** Newest first. */
 	timeline: [
-		{ when: '2026 – now', title: 'Course to confirm', place: 'University of Melbourne' },
-		{ when: '2023 – 2025', title: 'Course to confirm', place: 'University of Melbourne' }
-	] satisfies Milestone[] as Milestone[],
+		{ when: 'Mar 2026 – Jun 2027', title: 'Master of IT', place: 'University of Melbourne' },
+		{
+			when: 'Jul 2022 – Nov 2025',
+			title: 'Bachelor of Science',
+			place: 'University of Melbourne',
+			detail: 'Computer Software Engineering'
+		}
+	] as Milestone[],
 	links: [
 		{ label: 'GitHub', href: 'https://github.com/vivalavidax123' },
 		{ label: 'LinkedIn', href: 'https://www.linkedin.com/in/zeming-xia-9144a031b/' }
