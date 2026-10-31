@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
 	import { PreviewPlayer, type PreviewState } from '#lib/audio/preview.js';
+	import { rainSound } from '#lib/audio/rain-sound.js';
 	import type { FeatureBox } from '#lib/rain/index.js';
 	import { useRain } from '#lib/rain-handle.svelte.js';
 	import { dialog } from '#lib/actions/dialog.js';
@@ -74,12 +75,19 @@
 	});
 
 	onMount(() => {
-		player = new PreviewPlayer((s) => (preview = s));
+		player = new PreviewPlayer((s) => {
+			preview = s;
+			// Let the song come through: the rain steps back while a preview plays.
+			rainSound.duck(s.status === 'playing');
+		});
 		// The first few favourites are the likeliest first hovers.
 		// Links only: the sound itself loads once the pointer comes near a drop,
 		// so opening the page on mobile data stays light.
 		for (const song of songs.slice(0, 3)) void player.warm(song.id, song.deezerId, false);
-		return () => player?.destroy();
+		return () => {
+			player?.destroy();
+			rainSound.duck(false);
+		};
 	});
 
 	function play(song: Song | undefined) {
