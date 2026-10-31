@@ -2,6 +2,8 @@
 
 A personal site where everything is rain on a window. Songs are drops on the glass; hover one to hear its best few seconds.
 
+Live at **https://zack-website.vercel.app**. Every merge to `main` deploys there automatically, and every pull request gets a Vercel preview link.
+
 ## Run it
 
 ```sh
@@ -10,6 +12,8 @@ npm run dev
 ```
 
 - `/` is the home page: four drops on the glass for Songs, Projects, About and Now playing.
+- `/projects` shows projects as still drops; click one to open its story. Projects live in `src/lib/data/projects.ts`.
+- `/about` is a short intro, study timeline and links, from `src/lib/data/about.ts`.
 - `/songs` is the songs page: favourites and recent plays drift down the glass. Hover (or tap) a drop to hear a preview; there is also a plain list view.
 - `/api/now-playing` returns what Spotify is playing, or the last played track.
 - `/api/songs` returns the songs; `/api/preview/[deezerId]` returns a fresh Deezer preview link.
@@ -52,3 +56,7 @@ Without WebGL, or with reduced motion turned on, it shows a still scene instead.
 ## Spike
 
 `spike/` holds the Phase 1 experiments for Spotify and Deezer previews. See `spike/FINDINGS.md`.
+
+## Deploy
+
+The site runs on Vercel (`@sveltejs/adapter-vercel`). The three Spotify values are stored as encrypted environment variables in the Vercel project, for Production and Preview; nothing secret is in the repo. API responses are cached at Vercel's edge (`s-maxage`), so Spotify and Deezer are asked at most every few minutes however many people visit.

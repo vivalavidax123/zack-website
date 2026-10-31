@@ -4,6 +4,7 @@
 	import { PreviewPlayer, type PreviewState } from '#lib/audio/preview.js';
 	import type { FeatureBox } from '#lib/rain/index.js';
 	import { useRain } from '#lib/rain-handle.svelte.js';
+	import { dialog } from '#lib/actions/dialog.js';
 	import { splash } from '#lib/transitions/splash.js';
 	import { songDrops } from '#lib/songs/layout.js';
 	import type { Song } from '#lib/types.js';
@@ -75,7 +76,9 @@
 	onMount(() => {
 		player = new PreviewPlayer((s) => (preview = s));
 		// The first few favourites are the likeliest first hovers.
-		for (const song of songs.slice(0, 3)) void player.warm(song.id, song.deezerId);
+		// Links only: the sound itself loads once the pointer comes near a drop,
+		// so opening the page on mobile data stays light.
+		for (const song of songs.slice(0, 3)) void player.warm(song.id, song.deezerId, false);
 		return () => player?.destroy();
 	});
 
@@ -291,7 +294,14 @@
 {/if}
 
 {#if selectedSong}
-	<aside class="panel" aria-label={selectedSong.title} transition:splash={origin}>
+	<div
+		class="panel"
+		role="dialog"
+		aria-label={selectedSong.title}
+		tabindex="-1"
+		use:dialog
+		transition:splash={origin}
+	>
 		<button class="close" type="button" aria-label="Close" onclick={() => (selected = null)}>
 			×
 		</button>
@@ -317,7 +327,7 @@
 			{/if}
 			<a href={selectedSong.spotifyUrl} target="_blank" rel="noreferrer">Play on Spotify</a>
 		</div>
-	</aside>
+	</div>
 {/if}
 
 <style>
@@ -567,6 +577,9 @@
 		}
 	}
 
+	.panel:focus {
+		outline: none;
+	}
 	.panel {
 		position: fixed;
 		right: clamp(16px, 4vw, 48px);
